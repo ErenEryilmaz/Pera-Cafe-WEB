@@ -33,27 +33,11 @@
   *{box-sizing:border-box;margin:0;padding:0}
   .app{min-height:100vh;background:var(--color-background-tertiary);display:flex;align-items:center;justify-content:center;padding:24px;font-family:var(--font-sans)}
   .card{background:var(--color-background-primary);border:.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-xl);padding:36px 32px;width:100%;max-width:400px;box-shadow:0 10px 30px rgba(62,39,35,.05)}
-
-  /* ── DİL SEÇİCİ ── */
   .lang-bar{display:flex;justify-content:center;gap:6px;margin-bottom:28px}
-  .lang-btn{
-    display:flex;align-items:center;gap:6px;
-    padding:7px 16px;border-radius:50px;
-    border:1.5px solid var(--color-border-secondary);
-    background:transparent;
-    font-family:var(--font-sans);font-size:13px;font-weight:500;
-    color:var(--color-text-secondary);cursor:pointer;
-    transition:all .2s;
-  }
+  .lang-btn{display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:50px;border:1.5px solid var(--color-border-secondary);background:transparent;font-family:var(--font-sans);font-size:13px;font-weight:500;color:var(--color-text-secondary);cursor:pointer;transition:all .2s}
   .lang-btn:hover{background:var(--color-background-secondary)}
-  .lang-btn.active{
-    background:var(--color-primary);
-    border-color:var(--color-primary);
-    color:#fff;
-  }
+  .lang-btn.active{background:var(--color-primary);border-color:var(--color-primary);color:#fff}
   .lang-flag{font-size:16px;line-height:1}
-
-  /* ── LOGO ── */
   .logo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;margin-bottom:32px;text-align:center}
   .logo-mark{width:72px;height:72px;border-radius:50%;overflow:hidden;box-shadow:0 8px 16px var(--color-primary-shadow);border:3px solid #fff;background:var(--color-background-primary);display:flex;align-items:center;justify-content:center}
   .logo-mark img{width:100%;height:100%;object-fit:cover}
@@ -62,8 +46,6 @@
   .logo-sub::before,.logo-sub::after{content:'';position:absolute;top:50%;width:24px;height:1px;background:var(--color-border-secondary)}
   .logo-sub::before{right:100%;margin-right:10px}
   .logo-sub::after{left:100%;margin-left:10px}
-
-  /* ── EKRANLAR ── */
   .screen{display:none}
   .screen.active{display:block}
   h2{font-size:16px;font-weight:600;color:var(--color-text-primary);margin-bottom:6px}
@@ -92,8 +74,6 @@
   .error-msg{font-size:12px;color:var(--color-text-danger);margin-top:6px;display:none;align-items:center;gap:5px}
   .error-msg.show{display:flex}
   .error-icon{width:14px;height:14px;background:var(--color-background-danger);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .success-msg{font-size:12px;color:var(--color-text-success);margin-top:6px;display:none;align-items:center;gap:5px}
-  .success-msg.show{display:flex}
   .back-btn{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--color-text-secondary);cursor:pointer;background:none;border:none;padding:0;margin-bottom:24px;transition:color .15s}
   .back-btn:hover{color:var(--color-text-primary)}
   .back-btn svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
@@ -116,20 +96,12 @@
 <div class="app">
 <div class="card">
 
-  <!-- DİL SEÇİCİ -->
   <div class="lang-bar">
-    <button class="lang-btn active" data-lang="tr" onclick="setLang('tr')">
-      <span class="lang-flag">🇹🇷</span> Türkçe
-    </button>
-    <button class="lang-btn" data-lang="en" onclick="setLang('en')">
-      <span class="lang-flag">🇬🇧</span> English
-    </button>
-    <button class="lang-btn" data-lang="ar" onclick="setLang('ar')">
-      <span class="lang-flag">🇸🇦</span> العربية
-    </button>
+    <button class="lang-btn active" data-lang="tr" onclick="setLang('tr')"><span class="lang-flag">🇹🇷</span> Türkçe</button>
+    <button class="lang-btn" data-lang="en" onclick="setLang('en')"><span class="lang-flag">🇬🇧</span> English</button>
+    <button class="lang-btn" data-lang="ar" onclick="setLang('ar')"><span class="lang-flag">🇸🇦</span> العربية</button>
   </div>
 
-  <!-- LOGO -->
   <div class="logo">
     <div class="logo-mark">
       <img src="pera cafe yazisiz.png" alt="Pera Kafe" onerror="this.src='https://via.placeholder.com/72?text=PK'">
@@ -140,7 +112,7 @@
     </div>
   </div>
 
-  <!-- GİRİŞ EKRANI -->
+  <!-- GİRİŞ -->
   <div id="s-login" class="screen active">
     <h2 id="txt-welcome-title">Hoş geldiniz</h2>
     <p class="sub" id="txt-welcome-sub">Telefon numaranızla giriş yapın veya misafir olarak devam edin.</p>
@@ -148,9 +120,7 @@
       <label id="txt-phone-label">Telefon numarası</label>
       <div class="phone-wrap" id="phone-wrap">
         <div class="phone-prefix">+90</div>
-        <input type="text" id="phone-input" placeholder="5XX XXX XX XX" maxlength="13"
-               inputmode="numeric" autocomplete="tel"
-               onkeypress="if(event.key==='Enter') doLogin()"/>
+        <input type="text" id="phone-input" placeholder="5XX XXX XX XX" maxlength="13" inputmode="numeric" autocomplete="tel" onkeypress="if(event.key==='Enter') doLogin()"/>
       </div>
       <div class="error-msg" id="phone-error">
         <div class="error-icon"><svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="var(--color-text-danger)" stroke-width="1.5" stroke-linecap="round"><line x1="2" y1="2" x2="6" y2="6"/><line x1="6" y1="2" x2="2" y2="6"/></svg></div>
@@ -160,10 +130,10 @@
     <button class="btn-primary" id="btn-login" onclick="doLogin()"></button>
     <div class="divider"><span id="txt-or">veya</span></div>
     <button class="btn-outline" onclick="goGuest()" id="btn-guest"></button>
-    <button class="btn-ghost"   onclick="goRegister()" id="btn-register-link"></button>
+    <button class="btn-ghost" onclick="goRegister()" id="btn-register-link"></button>
   </div>
 
-  <!-- KAYIT EKRANI -->
+  <!-- KAYIT -->
   <div id="s-register" class="screen">
     <button class="back-btn" onclick="goBack('s-login')">
       <svg viewBox="0 0 14 14"><polyline points="9,2 4,7 9,12"/></svg>
@@ -186,9 +156,7 @@
       <label id="txt-phone-label2">Telefon numarası</label>
       <div class="phone-wrap" id="reg-phone-wrap">
         <div class="phone-prefix">+90</div>
-        <input type="text" id="reg-phone" placeholder="5XX XXX XX XX" maxlength="13"
-               inputmode="numeric" autocomplete="tel"
-               onkeypress="if(event.key==='Enter') doRegister()"/>
+        <input type="text" id="reg-phone" placeholder="5XX XXX XX XX" maxlength="13" inputmode="numeric" autocomplete="tel" onkeypress="if(event.key==='Enter') doRegister()"/>
       </div>
       <div class="hint" id="txt-phone-hint">10 haneli numara giriniz (5XX ile başlamalı)</div>
       <div class="error-msg" id="reg-error">
@@ -231,156 +199,31 @@
   <div id="s-guest" class="screen">
     <div class="welcome-box" style="background:var(--color-background-secondary);border-color:var(--color-border-secondary)">
       <div class="welcome-name" id="txt-guest-title" style="color:var(--color-text-primary)"></div>
-      <div class="welcome-sub"  id="txt-guest-sub"   style="color:var(--color-text-secondary)"></div>
+      <div class="welcome-sub" id="txt-guest-sub" style="color:var(--color-text-secondary)"></div>
     </div>
     <h2 id="txt-guest-ready"></h2>
     <p class="sub" id="txt-guest-desc"></p>
     <button class="btn-primary" onclick="guestLogin()" id="btn-guest-start"></button>
-    <button class="btn-ghost"   onclick="goBack('s-login')" id="btn-guest-back"></button>
+    <button class="btn-ghost" onclick="goBack('s-login')" id="btn-guest-back"></button>
   </div>
 
 </div>
 </div>
 
 <script>
-// ══════════════════════════════════════════════════════
-//  ÇEVİRİLER
-// ══════════════════════════════════════════════════════
 const LANG = {
   tr: {
-    logoSub:          'sipariş sistemi',
-    welcomeTitle:     'Hoş geldiniz',
-    welcomeSub:       'Telefon numaranızla giriş yapın veya misafir olarak devam edin.',
-    phoneLabel:       'Telefon numarası',
-    btnLogin:         'Giriş yap',
-    or:               'veya',
-    btnGuest:         'Üyeliksiz devam et',
-    btnRegisterLink:  'Üye değilim, kayıt ol',
-    back:             'Geri',
-    regTitle:         'Hesap oluştur',
-    regSub:           'Birkaç bilgiyle hemen üye olun.',
-    nameLabel:        'Ad',
-    surnameLabel:     'Soyad',
-    phoneLabel2:      'Telefon numarası',
-    phoneHint:        '10 haneli numara giriniz (5XX ile başlamalı)',
-    btnRegister:      'Kayıt ol',
-    regDoneTitle:     'Kayıt tamamlandı',
-    regDoneSub:       'Bilgileriniz sisteme kaydedildi.',
-    btnGoLogin:       'Giriş ekranına git',
-    seenAgain:        'Sizi tekrar görmek güzel.',
-    readyTitle:       'Siparişe hazır',
-    readySub:         'Menüye geçmek için devam edin.',
-    btnStart:         'Siparişe başla',
-    btnOtherAccount:  'Farklı hesapla giriş yap',
-    guestTitle:       'Misafir olarak devam ediyorsunuz',
-    guestSub:         'Siparişiniz oturumunuzla ilişkilendirilecek.',
-    guestReady:       'Siparişe hazır',
-    guestDesc:        'Üye olmadan siparişinizi verebilirsiniz.',
-    btnGuestStart:    'Siparişe başla',
-    btnGuestBack:     'Geri dön',
-    errShortPhone:    'Lütfen 10 haneli bir numara giriniz.',
-    errNotFound:      'Bu numara sistemde kayıtlı değil.',
-    errAskRegister:   'Bu numara kayıtlı değil. Kayıt olmak ister misiniz?',
-    errNoServer:      'Sunucuya ulaşılamıyor.',
-    errNameRequired:  'Ad ve soyad zorunludur.',
-    errBadPhone:      'Geçerli bir Türkiye cep numarası giriniz (5XX, 10 hane).',
-    errDuplicate:     'Bu numara zaten kayıtlı.',
-    checking:         'Kontrol ediliyor',
-    saving:           'Kaydediliyor',
-    regWelcomeSub:    'Üyeliğiniz oluşturuldu.',
-    speechLang:       'tr-TR',
+    logoSub:'sipariş sistemi',welcomeTitle:'Hoş geldiniz',welcomeSub:'Telefon numaranızla giriş yapın veya misafir olarak devam edin.',phoneLabel:'Telefon numarası',btnLogin:'Giriş yap',or:'veya',btnGuest:'Üyeliksiz devam et',btnRegisterLink:'Üye değilim, kayıt ol',back:'Geri',regTitle:'Hesap oluştur',regSub:'Birkaç bilgiyle hemen üye olun.',nameLabel:'Ad',surnameLabel:'Soyad',phoneLabel2:'Telefon numarası',phoneHint:'10 haneli numara giriniz (5XX ile başlamalı)',btnRegister:'Kayıt ol',regDoneTitle:'Kayıt tamamlandı',regDoneSub:'Bilgileriniz sisteme kaydedildi.',btnGoLogin:'Giriş ekranına git',seenAgain:'Sizi tekrar görmek güzel.',readyTitle:'Siparişe hazır',readySub:'Menüye geçmek için devam edin.',btnStart:'Siparişe başla',btnOtherAccount:'Farklı hesapla giriş yap',guestTitle:'Misafir olarak devam ediyorsunuz',guestSub:'Siparişiniz oturumunuzla ilişkilendirilecek.',guestReady:'Siparişe hazır',guestDesc:'Üye olmadan siparişinizi verebilirsiniz.',btnGuestStart:'Siparişe başla',btnGuestBack:'Geri dön',errShortPhone:'Lütfen 10 haneli bir numara giriniz.',errNotFound:'Bu numara sistemde kayıtlı değil.',errAskRegister:'Bu numara kayıtlı değil. Kayıt olmak ister misiniz?',errNoServer:'Sunucuya ulaşılamıyor.',errNameRequired:'Ad ve soyad zorunludur.',errBadPhone:'Geçerli bir Türkiye cep numarası giriniz (5XX, 10 hane).',errDuplicate:'Bu numara zaten kayıtlı.',checking:'Kontrol ediliyor',saving:'Kaydediliyor',regWelcomeSub:'Üyeliğiniz oluşturuldu.',
   },
   en: {
-    logoSub:          'order system',
-    welcomeTitle:     'Welcome',
-    welcomeSub:       'Sign in with your phone number or continue as guest.',
-    phoneLabel:       'Phone number',
-    btnLogin:         'Sign in',
-    or:               'or',
-    btnGuest:         'Continue without account',
-    btnRegisterLink:  'New here? Register',
-    back:             'Back',
-    regTitle:         'Create account',
-    regSub:           'Join in just a few steps.',
-    nameLabel:        'First name',
-    surnameLabel:     'Last name',
-    phoneLabel2:      'Phone number',
-    phoneHint:        'Enter 10-digit number (starts with 5XX)',
-    btnRegister:      'Register',
-    regDoneTitle:     'Registration complete',
-    regDoneSub:       'Your details have been saved.',
-    btnGoLogin:       'Go to sign in',
-    seenAgain:        'Great to see you again.',
-    readyTitle:       'Ready to order',
-    readySub:         'Continue to the menu.',
-    btnStart:         'Start ordering',
-    btnOtherAccount:  'Sign in with a different account',
-    guestTitle:       'Continuing as guest',
-    guestSub:         'Your order will be linked to this session.',
-    guestReady:       'Ready to order',
-    guestDesc:        'You can order without an account.',
-    btnGuestStart:    'Start ordering',
-    btnGuestBack:     'Go back',
-    errShortPhone:    'Please enter a 10-digit number.',
-    errNotFound:      'This number is not registered.',
-    errAskRegister:   'Number not found. Would you like to register?',
-    errNoServer:      'Cannot reach the server.',
-    errNameRequired:  'First and last name are required.',
-    errBadPhone:      'Enter a valid Turkish mobile number (5XX, 10 digits).',
-    errDuplicate:     'This number is already registered.',
-    checking:         'Checking',
-    saving:           'Saving',
-    regWelcomeSub:    'Your account has been created.',
-    speechLang:       'en-US',
+    logoSub:'order system',welcomeTitle:'Welcome',welcomeSub:'Sign in with your phone number or continue as guest.',phoneLabel:'Phone number',btnLogin:'Sign in',or:'or',btnGuest:'Continue without account',btnRegisterLink:'New here? Register',back:'Back',regTitle:'Create account',regSub:'Join in just a few steps.',nameLabel:'First name',surnameLabel:'Last name',phoneLabel2:'Phone number',phoneHint:'Enter 10-digit number (starts with 5XX)',btnRegister:'Register',regDoneTitle:'Registration complete',regDoneSub:'Your details have been saved.',btnGoLogin:'Go to sign in',seenAgain:'Great to see you again.',readyTitle:'Ready to order',readySub:'Continue to the menu.',btnStart:'Start ordering',btnOtherAccount:'Sign in with a different account',guestTitle:'Continuing as guest',guestSub:'Your order will be linked to this session.',guestReady:'Ready to order',guestDesc:'You can order without an account.',btnGuestStart:'Start ordering',btnGuestBack:'Go back',errShortPhone:'Please enter a 10-digit number.',errNotFound:'This number is not registered.',errAskRegister:'Number not found. Would you like to register?',errNoServer:'Cannot reach the server.',errNameRequired:'First and last name are required.',errBadPhone:'Enter a valid Turkish mobile number (5XX, 10 digits).',errDuplicate:'This number is already registered.',checking:'Checking',saving:'Saving',regWelcomeSub:'Your account has been created.',
   },
   ar: {
-    logoSub:          'نظام الطلبات',
-    welcomeTitle:     'أهلاً وسهلاً',
-    welcomeSub:       'سجّل الدخول برقم هاتفك أو تابع كضيف.',
-    phoneLabel:       'رقم الهاتف',
-    btnLogin:         'تسجيل الدخول',
-    or:               'أو',
-    btnGuest:         'المتابعة بدون حساب',
-    btnRegisterLink:  'لست عضواً؟ سجّل الآن',
-    back:             'رجوع',
-    regTitle:         'إنشاء حساب',
-    regSub:           'انضم في خطوات بسيطة.',
-    nameLabel:        'الاسم الأول',
-    surnameLabel:     'اسم العائلة',
-    phoneLabel2:      'رقم الهاتف',
-    phoneHint:        'أدخل 10 أرقام (تبدأ بـ 5XX)',
-    btnRegister:      'تسجيل',
-    regDoneTitle:     'اكتمل التسجيل',
-    regDoneSub:       'تم حفظ بياناتك.',
-    btnGoLogin:       'الذهاب إلى تسجيل الدخول',
-    seenAgain:        'يسعدنا رؤيتك مجدداً.',
-    readyTitle:       'جاهز للطلب',
-    readySub:         'تابع إلى القائمة.',
-    btnStart:         'ابدأ الطلب',
-    btnOtherAccount:  'الدخول بحساب آخر',
-    guestTitle:       'المتابعة كضيف',
-    guestSub:         'سيرتبط طلبك بهذه الجلسة.',
-    guestReady:       'جاهز للطلب',
-    guestDesc:        'يمكنك الطلب بدون حساب.',
-    btnGuestStart:    'ابدأ الطلب',
-    btnGuestBack:     'رجوع',
-    errShortPhone:    'الرجاء إدخال رقم مكوّن من 10 أرقام.',
-    errNotFound:      'هذا الرقم غير مسجّل.',
-    errAskRegister:   'الرقم غير موجود. هل تريد التسجيل؟',
-    errNoServer:      'تعذّر الاتصال بالخادم.',
-    errNameRequired:  'الاسم الأول واسم العائلة مطلوبان.',
-    errBadPhone:      'أدخل رقم هاتف تركي صالح (5XX، 10 أرقام).',
-    errDuplicate:     'هذا الرقم مسجّل بالفعل.',
-    checking:         'جارٍ التحقق',
-    saving:           'جارٍ الحفظ',
-    regWelcomeSub:    'تم إنشاء حسابك.',
-    speechLang:       'ar-SA',
+    logoSub:'نظام الطلبات',welcomeTitle:'أهلاً وسهلاً',welcomeSub:'سجّل الدخول برقم هاتفك أو تابع كضيف.',phoneLabel:'رقم الهاتف',btnLogin:'تسجيل الدخول',or:'أو',btnGuest:'المتابعة بدون حساب',btnRegisterLink:'لست عضواً؟ سجّل الآن',back:'رجوع',regTitle:'إنشاء حساب',regSub:'انضم في خطوات بسيطة.',nameLabel:'الاسم الأول',surnameLabel:'اسم العائلة',phoneLabel2:'رقم الهاتف',phoneHint:'أدخل 10 أرقام (تبدأ بـ 5XX)',btnRegister:'تسجيل',regDoneTitle:'اكتمل التسجيل',regDoneSub:'تم حفظ بياناتك.',btnGoLogin:'الذهاب إلى تسجيل الدخول',seenAgain:'يسعدنا رؤيتك مجدداً.',readyTitle:'جاهز للطلب',readySub:'تابع إلى القائمة.',btnStart:'ابدأ الطلب',btnOtherAccount:'الدخول بحساب آخر',guestTitle:'المتابعة كضيف',guestSub:'سيرتبط طلبك بهذه الجلسة.',guestReady:'جاهز للطلب',guestDesc:'يمكنك الطلب بدون حساب.',btnGuestStart:'ابدأ الطلب',btnGuestBack:'رجوع',errShortPhone:'الرجاء إدخال رقم مكوّن من 10 أرقام.',errNotFound:'هذا الرقم غير مسجّل.',errAskRegister:'الرقم غير موجود. هل تريد التسجيل؟',errNoServer:'تعذّر الاتصال بالخادم.',errNameRequired:'الاسم الأول واسم العائلة مطلوبان.',errBadPhone:'أدخل رقم هاتف تركي صالح (5XX، 10 أرقام).',errDuplicate:'هذا الرقم مسجّل بالفعل.',checking:'جارٍ التحقق',saving:'جارٍ الحفظ',regWelcomeSub:'تم إنشاء حسابك.',
   }
 };
 
-// ══════════════════════════════════════════════════════
-//  DİL YÖNETİMİ
-// ══════════════════════════════════════════════════════
+// ── DİL: localStorage'da saklanır (tercih kalıcı olsun) ──
 let currentLang = localStorage.getItem('peraLang') || 'tr';
 
 function setLang(lang) {
@@ -393,60 +236,30 @@ function applyLang() {
   const t = LANG[currentLang];
   document.documentElement.lang = currentLang;
   document.documentElement.dir  = currentLang === 'ar' ? 'rtl' : 'ltr';
-
-  // Aktif buton
-  document.querySelectorAll('.lang-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.lang === currentLang);
-  });
-
-  // Metinleri güncelle
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === currentLang));
   const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
-  set('logo-sub',          t.logoSub);
-  set('txt-welcome-title', t.welcomeTitle);
-  set('txt-welcome-sub',   t.welcomeSub);
-  set('txt-phone-label',   t.phoneLabel);
-  set('btn-login',         t.btnLogin);
-  set('txt-or',            t.or);
-  set('btn-guest',         t.btnGuest);
-  set('btn-register-link', t.btnRegisterLink);
-  set('txt-back',          t.back);
-  set('txt-back2',         t.back);
-  set('txt-reg-title',     t.regTitle);
-  set('txt-reg-sub',       t.regSub);
-  set('txt-name-label',    t.nameLabel);
-  set('txt-surname-label', t.surnameLabel);
-  set('txt-phone-label2',  t.phoneLabel2);
-  set('txt-phone-hint',    t.phoneHint);
-  set('btn-register',      t.btnRegister);
-  set('txt-reg-done-title',t.regDoneTitle);
-  set('txt-reg-done-sub',  t.regDoneSub);
-  set('btn-go-login',      t.btnGoLogin);
-  set('txt-seen-again',    t.seenAgain);
-  set('txt-ready-title',   t.readyTitle);
-  set('txt-ready-sub',     t.readySub);
-  set('btn-start',         t.btnStart);
-  set('btn-other-account', t.btnOtherAccount);
-  set('txt-guest-title',   t.guestTitle);
-  set('txt-guest-sub',     t.guestSub);
-  set('txt-guest-ready',   t.guestReady);
-  set('txt-guest-desc',    t.guestDesc);
-  set('btn-guest-start',   t.btnGuestStart);
-  set('btn-guest-back',    t.btnGuestBack);
+  set('logo-sub',t.logoSub);set('txt-welcome-title',t.welcomeTitle);set('txt-welcome-sub',t.welcomeSub);
+  set('txt-phone-label',t.phoneLabel);set('btn-login',t.btnLogin);set('txt-or',t.or);
+  set('btn-guest',t.btnGuest);set('btn-register-link',t.btnRegisterLink);set('txt-back',t.back);set('txt-back2',t.back);
+  set('txt-reg-title',t.regTitle);set('txt-reg-sub',t.regSub);set('txt-name-label',t.nameLabel);
+  set('txt-surname-label',t.surnameLabel);set('txt-phone-label2',t.phoneLabel2);set('txt-phone-hint',t.phoneHint);
+  set('btn-register',t.btnRegister);set('txt-reg-done-title',t.regDoneTitle);set('txt-reg-done-sub',t.regDoneSub);
+  set('btn-go-login',t.btnGoLogin);set('txt-seen-again',t.seenAgain);set('txt-ready-title',t.readyTitle);
+  set('txt-ready-sub',t.readySub);set('btn-start',t.btnStart);set('btn-other-account',t.btnOtherAccount);
+  set('txt-guest-title',t.guestTitle);set('txt-guest-sub',t.guestSub);set('txt-guest-ready',t.guestReady);
+  set('txt-guest-desc',t.guestDesc);set('btn-guest-start',t.btnGuestStart);set('btn-guest-back',t.btnGuestBack);
 }
 
-// ══════════════════════════════════════════════════════
-//  OTURUM KONTROLÜ
-// ══════════════════════════════════════════════════════
-if (localStorage.getItem('userName')) {
+// ── OTURUM KONTROLÜ: sessionStorage kullanılır ──
+// Sekme/tarayıcı kapanınca oturum silinir → login ekranına döner.
+// F5 yenilemede oturum korunur → kullanıcı tekrar giriş yapmak zorunda kalmaz.
+if (sessionStorage.getItem('userName')) {
   window.location.href = 'index.html';
 }
 
-// Sayfa yüklenince dili uygula
 applyLang();
 
-// ══════════════════════════════════════════════════════
-//  TELEFON FORMAT
-// ══════════════════════════════════════════════════════
+// ── TELEFON FORMAT ──
 function formatPhone(val) {
   let d = val.replace(/\D/g,'');
   if(d.length>10) d=d.slice(0,10);
@@ -457,94 +270,89 @@ function formatPhone(val) {
   if(d.length>8) out+=' '+d.slice(8,10);
   return out;
 }
-function rawPhone(el){return el.value.replace(/\D/g,'');}
+function rawPhone(el){ return el.value.replace(/\D/g,''); }
 
-document.getElementById('phone-input').addEventListener('input',function(){
-  this.value=formatPhone(this.value);
+document.getElementById('phone-input').addEventListener('input', function(){
+  this.value = formatPhone(this.value);
   document.getElementById('phone-wrap').classList.remove('error');
   document.getElementById('phone-error').classList.remove('show');
 });
-document.getElementById('reg-phone').addEventListener('input',function(){
-  this.value=formatPhone(this.value);
+document.getElementById('reg-phone').addEventListener('input', function(){
+  this.value = formatPhone(this.value);
   document.getElementById('reg-phone-wrap').classList.remove('error');
   document.getElementById('reg-error').classList.remove('show');
 });
 
-// ══════════════════════════════════════════════════════
-//  NAVİGASYON
-// ══════════════════════════════════════════════════════
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+// ── NAVİGASYON ──
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function goBack(t){ showScreen(t); }
+function goGuest(){ showScreen('s-guest'); }
+function goRegister(){ showScreen('s-register'); }
+function goToCafe(){ window.location.href = 'index.html'; }
+
+function logout(){
+  sessionStorage.removeItem('userName');
+  window.location.reload();
 }
-function goBack(t){showScreen(t);}
-function goGuest(){showScreen('s-guest');}
-function goRegister(){showScreen('s-register');}
-function goToCafe(){window.location.href='index.html';}
-function logout(){localStorage.removeItem('userName');window.location.reload();}
 
 function guestLogin(){
-  localStorage.setItem('userName','Misafir');
-  window.location.href='index.html';
+  sessionStorage.setItem('userName', 'Misafir');
+  window.location.href = 'index.html';
 }
 
-// ══════════════════════════════════════════════════════
-//  GİRİŞ YAP
-// ══════════════════════════════════════════════════════
+// ── GİRİŞ YAP ──
 async function doLogin(){
-  const t   = LANG[currentLang];
-  const inp = document.getElementById('phone-input');
-  const raw = rawPhone(inp);
-  const btn = document.getElementById('btn-login');
-  const wrap= document.getElementById('phone-wrap');
-  const err = document.getElementById('phone-error');
-  const errTxt=document.getElementById('phone-error-text');
+  const t    = LANG[currentLang];
+  const inp  = document.getElementById('phone-input');
+  const raw  = rawPhone(inp);
+  const btn  = document.getElementById('btn-login');
+  const wrap = document.getElementById('phone-wrap');
+  const err  = document.getElementById('phone-error');
+  const errTxt = document.getElementById('phone-error-text');
 
-  if(raw.length!==10){
+  if(raw.length !== 10){
     wrap.classList.add('error');
-    errTxt.textContent=t.errShortPhone;
+    errTxt.textContent = t.errShortPhone;
     err.classList.add('show');
     wrap.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:300,iterations:2});
     return;
   }
 
-  btn.disabled=true;
-  btn.innerHTML=t.checking+' <span class="loading-dots"><span></span><span></span><span></span></span>';
+  btn.disabled = true;
+  btn.innerHTML = t.checking + ' <span class="loading-dots"><span></span><span></span><span></span></span>';
 
-  try{
-    const res=await fetch('http://127.0.0.1:8000/login',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({phone:raw})
+  try {
+    const res  = await fetch('/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({phone: raw})
     });
-    const data=await res.json();
+    const data = await res.json();
 
-    setTimeout(()=>{
-      btn.disabled=false;
-      btn.textContent=t.btnLogin;
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = t.btnLogin;
       if(data.success){
-        localStorage.setItem('userName',data.name);
-        document.getElementById('member-name').textContent='👋 '+data.name;
+        sessionStorage.setItem('userName', data.name); // ← sessionStorage
+        document.getElementById('member-name').textContent = '👋 ' + data.name;
         showScreen('s-welcome');
       } else {
         wrap.classList.add('error');
-        errTxt.textContent=t.errAskRegister;
+        errTxt.textContent = t.errAskRegister;
         err.classList.add('show');
         wrap.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:300,iterations:2});
       }
-    },800);
-  }catch(e){
-    btn.disabled=false;
-    btn.textContent=t.btnLogin;
+    }, 800);
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = t.btnLogin;
     wrap.classList.add('error');
-    errTxt.textContent=t.errNoServer;
+    errTxt.textContent = t.errNoServer;
     err.classList.add('show');
   }
 }
 
-// ══════════════════════════════════════════════════════
-//  KAYIT OL
-// ══════════════════════════════════════════════════════
+// ── KAYIT OL ──
 async function doRegister(){
   const t       = LANG[currentLang];
   const name    = document.getElementById('reg-name').value.trim();
@@ -559,49 +367,49 @@ async function doRegister(){
   err.classList.remove('show');
   wrap.classList.remove('error');
 
-  if(!name||!surname){
-    errTxt.textContent=t.errNameRequired;
+  if(!name || !surname){
+    errTxt.textContent = t.errNameRequired;
     err.classList.add('show');
     return;
   }
-  if(raw.length!==10||!raw.startsWith('5')){
+  if(raw.length !== 10 || !raw.startsWith('5')){
     wrap.classList.add('error');
-    errTxt.textContent=t.errBadPhone;
+    errTxt.textContent = t.errBadPhone;
     err.classList.add('show');
     wrap.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:300,iterations:2});
     return;
   }
 
-  btn.disabled=true;
-  btn.innerHTML=t.saving+' <span class="loading-dots"><span></span><span></span><span></span></span>';
+  btn.disabled = true;
+  btn.innerHTML = t.saving + ' <span class="loading-dots"><span></span><span></span><span></span></span>';
 
-  try{
-    const res=await fetch('http://127.0.0.1:8000/register',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({phone:raw,first_name:name,last_name:surname})
+  try {
+    const res  = await fetch('/register', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({phone: raw, first_name: name, last_name: surname})
     });
-    const data=await res.json();
+    const data = await res.json();
 
-    setTimeout(()=>{
-      btn.disabled=false;
-      btn.textContent=t.btnRegister;
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = t.btnRegister;
       if(data.success){
-        document.getElementById('welcome-name').textContent='👋 '+name+'!';
-        document.getElementById('welcome-sub').textContent=t.regWelcomeSub+' (+90 '+formatPhone(raw)+')';
+        document.getElementById('welcome-name').textContent = '👋 ' + name + '!';
+        document.getElementById('welcome-sub').textContent  = t.regWelcomeSub + ' (+90 ' + formatPhone(raw) + ')';
         showScreen('s-success');
       } else {
         wrap.classList.add('error');
-        errTxt.textContent=data.message||t.errDuplicate;
+        errTxt.textContent = data.message || t.errDuplicate;
         err.classList.add('show');
         wrap.animate([{transform:'translateX(-5px)'},{transform:'translateX(5px)'},{transform:'translateX(0)'}],{duration:300,iterations:2});
       }
-    },1000);
-  }catch(e){
-    btn.disabled=false;
-    btn.textContent=t.btnRegister;
+    }, 1000);
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = t.btnRegister;
     wrap.classList.add('error');
-    errTxt.textContent=t.errNoServer;
+    errTxt.textContent = t.errNoServer;
     err.classList.add('show');
   }
 }
