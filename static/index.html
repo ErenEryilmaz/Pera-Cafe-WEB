@@ -579,7 +579,7 @@ async function sendMessage(textOverride = null) {
     setPill('process');
 
     try {
-        const res = await fetch('http://127.0.0.1:8000/chat', {
+        const res = await fetch('/chat', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ messages: chatMessages, user_name: userName, lang: currentLang })
@@ -707,7 +707,7 @@ function logout() {
 // ══════════════════════════════════════════════════════════
 async function fetchMenu() {
     try {
-        const r = await fetch('http://127.0.0.1:8000/menu');
+        const r = await fetch('/menu');
         const d = await r.json();
         renderMenu(d.menu);
     } catch(e) {
