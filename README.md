@@ -1,9 +1,11 @@
-☕ Pera Kafe
+☕ PERA KAFE
+
 Pera Kafe is an AI-powered virtual barista and web application designed to offer customers a fully personalized, interactive, and modern coffee ordering experience.
 
 Initially designed as a prototype, the architecture has been upgraded to a professional cloud-ready structure, migrating to a high-performance FastAPI backend and a dedicated HTML/JavaScript frontend for maximum scalability and speed.
 
-🌟 Key Features
+🌟 KEY FEATURES
+
 🤖 AI Barista (Gemini AI): Powered by advanced natural language processing, the barista can chat with customers, recommend coffee blends, and seamlessly understand complex, custom orders.
 
 🗣️ Voice Interaction (TTS Integration): Utilizing Text-to-Speech technology, the virtual barista communicates with you audibly, enhancing the real-world cafe feel.
@@ -14,7 +16,8 @@ Initially designed as a prototype, the architecture has been upgraded to a profe
 
 ⚡ High-Performance Backend: An asynchronous, low-latency API architecture built entirely on FastAPI.
 
-🏗️ System Architecture & Tech Stack
+🏗️ SYSTEM ARHICTECTURE & TECH STACK
+
 Pera Kafe is built using a modern client-server architecture.
 
 Backend (Server-Side)
