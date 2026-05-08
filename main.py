@@ -26,6 +26,7 @@ from gtts import gTTS
 from dotenv import load_dotenv
 from typing import Optional, List
 from datetime import datetime, timedelta
+from fastapi.responses import FileResponse
 
 load_dotenv()
 
@@ -52,10 +53,9 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"],
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # EKLENECEK KISIM BURASI
-@app.get("/")
-async def root():
-    # Eğer giriş dosyanızın adı index.html ise burayı "/static/index.html" olarak değiştirin.
-    return RedirectResponse(url="/static/perakafe_login.html")
+async def ana_sayfa():
+    # Sadece ana domaine girildiğinde doğrudan login sayfasını döndür
+    return FileResponse("static/perakafe_login.html")
 
 security = HTTPBearer()
 
