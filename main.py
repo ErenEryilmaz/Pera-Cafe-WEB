@@ -52,6 +52,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"],
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+app.get("/")
 # EKLENECEK KISIM BURASI
 async def ana_sayfa():
     # Sadece ana domaine girildiğinde doğrudan login sayfasını döndür
