@@ -103,8 +103,14 @@ class OrderCreateReq(BaseModel):
 # ── VERİTABANI ──────────────────────────────────────────────
 def get_db():
     return mysql.connector.connect(
-        host=DB_HOST, port=int(DB_PORT), user=DB_USER,
-        password=DB_PASSWORD, database=DB_NAME, ssl_disabled=False)
+        host=DB_HOST, 
+        port=int(DB_PORT), 
+        user=DB_USER,
+        password=DB_PASSWORD, 
+        database=DB_NAME, 
+        ssl_disabled=False,
+        ssl_verify_identity=False  # <-- Bu satırı ekleyin
+    )
 
 def get_menu_data():
     try:
