@@ -437,9 +437,7 @@ function applyLang() {
 // ══════════════════════════════════════════════════════
 //  OTURUM KONTROLÜ
 // ══════════════════════════════════════════════════════
-if (localStorage.getItem('userName')) {
-  window.location.href = 'index.html';
-}
+localStorage.clear();
 
 // Sayfa yüklenince dili uygula
 applyLang();
