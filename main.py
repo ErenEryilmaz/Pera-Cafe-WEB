@@ -49,10 +49,9 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"],
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
-# EKLENECEK KISIM BURASI
 async def ana_sayfa():
-    # Sadece ana domaine girildiğinde doğrudan login sayfasını döndür
-    return FileResponse("static/perakafe_login.html")
+    # Kullanıcı doğrudan siteye (peracafe.me) girdiğinde onu çalışan linke yönlendir
+    return RedirectResponse(url="/static/perakafe_login.html")
 
 security = HTTPBearer()
 
