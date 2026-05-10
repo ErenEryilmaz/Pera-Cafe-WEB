@@ -315,7 +315,7 @@ const UI = {
 //  STATE
 // ══════════════════════════════════════════════════════════
 const userName  = localStorage.getItem('userName') || '';
-if (!userName)  { window.location.href = 'perakafe_login.html'; }
+if (!userName) { window.location.href = '/'; }
 
 let currentLang = localStorage.getItem('peraLang') || 'tr';
 let t           = UI[currentLang] || UI.tr;
@@ -721,7 +721,7 @@ function handleKeyPress(e) { if (e.key === 'Enter') sendMessage(); }
 
 function logout() {
     localStorage.removeItem('userName');
-    window.location.href = 'perakafe_login.html';
+    window.location.href = '/';
 }
 
 // ══════════════════════════════════════════════════════════
