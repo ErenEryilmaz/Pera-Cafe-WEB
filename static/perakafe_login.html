@@ -477,17 +477,17 @@ function showScreen(id){
 function goBack(t){showScreen(t);}
 function goGuest(){showScreen('s-guest');}
 function goRegister(){showScreen('s-register');}
-function goToCafe(){window.location.href = "index.html";;}
+function goToCafe(){window.location.href = "static/index.html";;}
 function logout(){localStorage.removeItem('userName');window.location.reload();}
 
 function guestLogin(){
   localStorage.setItem('userName','Misafir');
-  window.location.href='index.html';
+  window.location.href='static/index.html';
 }
 
 // ══════════════════════════════════════════════════════
 //  GİRİŞ YAP
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
 async function doLogin(){
   const t   = LANG[currentLang];
   const inp = document.getElementById('phone-input');
