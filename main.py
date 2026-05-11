@@ -39,6 +39,18 @@ DB_NAME        = os.getenv("MYSQL_DATABASE")
 ADMIN_USER     = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASS     = os.getenv("ADMIN_PASSWORD", "admin123")
 
+import logging
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.StreamHandler(),           # terminale yaz
+        logging.FileHandler("pera_debug.log")  # dosyaya da yaz
+    ]
+)
+log = logging.getLogger("pera")
+
 # Basit token store (production'da Redis kullanın)
 active_tokens: dict[str, float] = {}   # token → expiry timestamp
 TOKEN_TTL = 3600 * 8                   # 8 saat
@@ -102,15 +114,29 @@ class OrderCreateReq(BaseModel):
 
 # ── VERİTABANI ──────────────────────────────────────────────
 def get_db():
-    return mysql.connector.connect(
-        host=DB_HOST, 
-        port=int(DB_PORT), 
-        user=DB_USER,
-        password=DB_PASSWORD, 
-        database=DB_NAME, 
-        ssl_disabled=False,
-        ssl_verify_identity=False  # <-- Bu satırı ekleyin
-    )
+    log.debug(f"DB bağlantısı deneniyor → host={DB_HOST} port={DB_PORT} db={DB_NAME} user={DB_USER}")
+    if not all([DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME]):
+        log.error(f"Eksik env değişkeni! HOST={DB_HOST} PORT={DB_PORT} USER={DB_USER} DB={DB_NAME}")
+        raise Exception("Bir veya daha fazla DB ortam değişkeni tanımsız (.env kontrol edin).")
+    try:
+        conn = mysql.connector.connect(
+            host=DB_HOST,
+            port=int(DB_PORT),
+            user=DB_USER,
+            password=DB_PASSWORD,
+            database=DB_NAME,
+            ssl_disabled=False,
+            ssl_verify_identity=False,
+            connection_timeout=10,
+        )
+        log.info("✅ DB bağlantısı başarılı.")
+        return conn
+    except mysql.connector.Error as e:
+        log.error(f"❌ MySQL hatası: errno={e.errno} msg={e.msg}")
+        raise
+    except Exception as e:
+        log.error(f"❌ Beklenmeyen bağlantı hatası: {e}")
+        raise
 
 def get_menu_data():
     try:
@@ -166,6 +192,29 @@ def make_audio_b64(text, lang="tr"):
 # ══════════════════════════════════════════════════════════════
 #  MÜŞTERİ ENDPOINTLERİ
 # ══════════════════════════════════════════════════════════════
+
+@app.get("/admin/db-ping")
+async def db_ping():
+    """Tarayıcıda /admin/db-ping adresini açın → DB durumunu gösterir."""
+    import traceback
+    try:
+        db = get_db()
+        cur = db.cursor()
+        cur.execute("SELECT VERSION(), NOW(), DATABASE()")
+        row = cur.fetchone()
+        db.close()
+        return {
+            "status": "ok",
+            "mysql_version": row[0],
+            "server_time":   str(row[1]),
+            "database":      row[2],
+        }
+    except Exception as e:
+        return {
+            "status":    "error",
+            "error":     str(e),
+            "traceback": traceback.format_exc(),
+        }   
 
 @app.post("/login")
 async def login(req: LoginRequest):
