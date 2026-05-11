@@ -113,30 +113,21 @@ class OrderCreateReq(BaseModel):
     notes:        Optional[str] = None
 
 # ── VERİTABANI ──────────────────────────────────────────────
+
+
+CA_CERT = os.path.join(os.path.dirname(__file__), "ca-certificate.crt")
+
 def get_db():
-    log.debug(f"DB bağlantısı deneniyor → host={DB_HOST} port={DB_PORT} db={DB_NAME} user={DB_USER}")
-    if not all([DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME]):
-        log.error(f"Eksik env değişkeni! HOST={DB_HOST} PORT={DB_PORT} USER={DB_USER} DB={DB_NAME}")
-        raise Exception("Bir veya daha fazla DB ortam değişkeni tanımsız (.env kontrol edin).")
-    try:
-        conn = mysql.connector.connect(
-            host=DB_HOST,
-            port=int(DB_PORT),
-            user=DB_USER,
-            password=DB_PASSWORD,
-            database=DB_NAME,
-            ssl_disabled=False,
-            ssl_verify_identity=False,
-            connection_timeout=10,
-        )
-        log.info("✅ DB bağlantısı başarılı.")
-        return conn
-    except mysql.connector.Error as e:
-        log.error(f"❌ MySQL hatası: errno={e.errno} msg={e.msg}")
-        raise
-    except Exception as e:
-        log.error(f"❌ Beklenmeyen bağlantı hatası: {e}")
-        raise
+    return mysql.connector.connect(
+        host=DB_HOST,
+        port=int(DB_PORT),
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        ssl_ca=CA_CERT,
+        ssl_verify_identity=False,
+        connection_timeout=10,
+    )
 
 def get_menu_data():
     try:
