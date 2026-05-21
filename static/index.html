@@ -117,7 +117,17 @@
         .right-col{flex:1;min-width:260px;max-width:310px;display:flex;flex-direction:column;gap:14px;overflow:hidden}
         .box-wrapper{background:var(--bg-surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow);display:flex;flex-direction:column;transition:background .3s,border-color .3s}
         .box-wrapper h3{color:var(--accent);border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:10px;font-size:14px}
-        .chat-history{height:210px;overflow-y:auto;display:flex;flex-direction:column;gap:7px}
+        /* Kampanya kartları */
+        .campaigns-box{overflow-y:auto;max-height:230px;display:flex;flex-direction:column;gap:9px}
+        .campaign-card{border-radius:10px;padding:10px 13px;border-left:4px solid #E67E22;background:var(--bg-card);transition:transform .15s,box-shadow .15s}
+        .campaign-card:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+        .campaign-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;color:#fff;margin-bottom:5px;letter-spacing:.3px;text-transform:uppercase}
+        .campaign-title{font-size:13px;font-weight:700;color:var(--text-main);margin-bottom:2px}
+        .campaign-desc{font-size:11px;color:var(--text-sub);line-height:1.4}
+        .campaign-dates{font-size:10px;color:var(--text-muted);margin-top:4px}
+        .campaign-empty{text-align:center;color:var(--text-muted);font-size:13px;padding:16px 0}
+        /* Chat mesajları artık görünmüyor ama JS kodu çalışmaya devam ediyor */
+        .chat-history{display:none}
         .message{padding:8px 12px;border-radius:10px;max-width:88%;font-size:13px;line-height:1.45}
         .bot-msg{background:var(--bg-card);border:1px solid var(--border);align-self:flex-start;color:var(--text-main)}
         .user-msg{background:var(--accent);color:#fff;align-self:flex-end;border-radius:10px 10px 2px 10px}
@@ -134,6 +144,73 @@
         .reset-btn:hover{background:var(--accent-hover)}
         ::-webkit-scrollbar{width:4px}
         ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+        /* ══════════════════════════════════════════════
+           MOBİL UYUM (#12)
+        ══════════════════════════════════════════════ */
+
+        /* Menü toggle butonu — sadece mobilde görünür */
+        .menu-toggle{display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:5px 10px;color:var(--topbar-text);cursor:pointer;font-size:16px;line-height:1}
+
+        /* Sipariş takip modal */
+        .track-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:none;align-items:center;justify-content:center;padding:16px}
+        .track-overlay.show{display:flex}
+        .track-card{background:var(--bg-surface);border:1.5px solid var(--border);border-radius:18px;padding:28px 24px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.25);text-align:center}
+        .track-title{font-size:17px;font-weight:700;color:var(--text-main);margin-bottom:6px}
+        .track-sub{font-size:13px;color:var(--text-sub);margin-bottom:24px}
+        .track-steps{display:flex;flex-direction:column;gap:0;margin-bottom:24px;text-align:left}
+        .track-step{display:flex;align-items:center;gap:12px;padding:10px 0;position:relative}
+        .track-step:not(:last-child)::after{content:'';position:absolute;left:14px;top:38px;width:2px;height:calc(100% - 18px);background:var(--border)}
+        .track-step.done::after{background:var(--accent)}
+        .step-dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--bg-card);transition:all .4s;z-index:1}
+        .track-step.done .step-dot{background:var(--accent);border-color:var(--accent);color:#fff}
+        .track-step.active .step-dot{background:var(--bg-surface);border-color:var(--accent);color:var(--accent);animation:pulse-dot 1.4s ease-in-out infinite}
+        @keyframes pulse-dot{0%,100%{box-shadow:0 0 0 0 rgba(78,52,46,.4)}50%{box-shadow:0 0 0 6px rgba(78,52,46,0)}}
+        .step-label{font-size:13px;color:var(--text-sub);font-weight:500}
+        .track-step.done .step-label,.track-step.active .step-label{color:var(--text-main);font-weight:600}
+        .track-order-id{font-size:11px;color:var(--text-muted);margin-top:4px}
+        .track-close-btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s}
+        .track-close-btn:hover{background:var(--accent-hover)}
+
+        /* İndirim satırı sepette */
+        .discount-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px;color:#27AE60;font-weight:600}
+        .discount-badge{background:rgba(39,174,96,.12);border:1px solid rgba(39,174,96,.3);border-radius:12px;padding:1px 8px;font-size:10px}
+
+        @media (max-width: 900px) {
+            .sidebar{
+                position:fixed;left:0;top:52px;bottom:0;z-index:100;
+                transform:translateX(-100%);transition:transform .3s;
+                box-shadow:4px 0 20px rgba(0,0,0,.2);
+            }
+            .sidebar.open{transform:translateX(0)}
+            .menu-toggle{display:block}
+            .main-container{padding:10px 8px;gap:10px}
+            .right-col{min-width:0;max-width:none}
+            .avatar-frame{height:260px}
+        }
+        @media (max-width:680px){
+            .topbar{padding:0 12px;height:48px}
+            .topbar-brand{display:none}
+            .theme-swatches{gap:4px}
+            .swatch{width:18px;height:18px}
+            .main-container{flex-direction:column;overflow-y:auto;padding:8px}
+            .center-col{min-width:0;width:100%}
+            .right-col{width:100%;max-width:none;flex-direction:row;flex-wrap:wrap;gap:10px;overflow:visible}
+            .right-col .box-wrapper{flex:1;min-width:260px}
+            .avatar-wrap{margin-bottom:10px}
+            .avatar-frame{height:220px;border-radius:12px;border-width:3px}
+            .voice-pill{padding:5px 12px;gap:7px}
+            .voice-pill-text{font-size:11px}
+            .input-area{gap:6px}
+            .input-area input[type="text"]{padding:10px 12px;font-size:13px}
+            .send-btn{padding:0 14px;font-size:12px}
+            .campaigns-box{max-height:160px}
+            .receipt{max-height:180px}
+        }
+        @media (max-width:400px){
+            .right-col{flex-direction:column}
+            .right-col .box-wrapper{min-width:0}
+        }
     </style>
     <script type="importmap">
         {
@@ -150,6 +227,7 @@
 <!-- TOPBAR -->
 <div class="topbar">
     <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()" title="Menü">☰</button>
         <div class="av-circle" id="av-circle">?</div>
         <span class="topbar-name" id="topbar-name">—</span>
         <span class="topbar-brand" style="margin-left:12px;padding-left:12px;border-left:1px solid rgba(255,255,255,.2)">☕ Pera Kafe</span>
@@ -203,10 +281,15 @@
         </div>
 
         <div class="right-col">
+            <!-- Kampanya kartları (chat geçmişinin yerini aldı) -->
             <div class="box-wrapper">
-                <h3 id="txt-chat-title">—</h3>
-                <div class="chat-history" id="chat-history"></div>
+                <h3 id="txt-campaigns-title">🎁 Kampanyalar</h3>
+                <div class="campaigns-box" id="campaigns-container">
+                    <div class="campaign-empty">Yükleniyor...</div>
+                </div>
             </div>
+            <!-- Chat history gizli ama JS için kalıyor -->
+            <div class="chat-history" id="chat-history" style="display:none"></div>
             <div class="box-wrapper">
                 <h3 id="txt-receipt-title">—</h3>
                 <div class="receipt" id="receipt-container"></div>
@@ -232,7 +315,7 @@ const UI = {
         chatTitle:      '💬 Son Konuşmalar',
         receiptTitle:   '🧾 Adisyon',
         cartEmpty:      'Sepetiniz boş.',
-        btnPay:         'Ödeme Yap / Sıfırla',
+        btnPay:         'Sipariş Ver 🛎️',
         total:          'Toplam',
         inputPlaceholder:'Veya buraya yazın...',
         btnSend:        'Gönder',
@@ -261,7 +344,7 @@ const UI = {
         chatTitle:      '💬 Recent Chats',
         receiptTitle:   '🧾 Bill',
         cartEmpty:      'Your cart is empty.',
-        btnPay:         'Pay / Clear',
+        btnPay:         'Place Order 🛎️',
         total:          'Total',
         inputPlaceholder:'Or type here...',
         btnSend:        'Send',
@@ -290,7 +373,7 @@ const UI = {
         chatTitle:      '💬 المحادثات الأخيرة',
         receiptTitle:   '🧾 الفاتورة',
         cartEmpty:      'سلّتك فارغة.',
-        btnPay:         'دفع / مسح',
+        btnPay:         'تقديم الطلب 🛎️',
         total:          'المجموع',
         inputPlaceholder:'أو اكتب هنا...',
         btnSend:        'إرسال',
@@ -315,7 +398,7 @@ const UI = {
 //  STATE
 // ══════════════════════════════════════════════════════════
 const userName  = localStorage.getItem('userName') || '';
-if (!userName) { window.location.href = '/'; }
+if (!userName)  { window.location.href = 'perakafe_login.html'; }
 
 let currentLang = localStorage.getItem('peraLang') || 'tr';
 let t           = UI[currentLang] || UI.tr;
@@ -340,6 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
     applyLang();
 
     fetchMenu();
+    fetchCampaigns();
     initRecognition();
     setTimeout(startVoiceSystem, 800);
 });
@@ -588,7 +672,7 @@ async function sendMessage(textOverride = null) {
     setPill('process');
 
     try {
-        const res = await fetch('/chat', {
+        const res = await fetch(window.location.origin+'/chat', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ messages: chatMessages, user_name: userName, lang: currentLang })
@@ -652,8 +736,9 @@ function resumeWakeWord(delay) {
     }, delay);
 }
 
+
 // ══════════════════════════════════════════════════════════
-//  SEPET
+//  SEPET — Kampanya İndirim Uygulaması (#4)
 // ══════════════════════════════════════════════════════════
 function mergeCart(aiCart) {
     const grouped = {};
@@ -672,6 +757,40 @@ function changeQty(index, delta) {
     renderCart();
 }
 
+// Aktif kampanyaları sepete uygular; indirim detaylarını döner
+function applyDiscounts(cartItems, campaigns) {
+    let discounts = []; // [{label, amount}]
+    let freeItems = {}; // hangi ürünlerde kaç bedava
+
+    campaigns.forEach(camp => {
+        if (!camp) return;
+        if (camp.type === 'buy_x_get_y') {
+            const buy = camp.config.buy || 2;
+            const get = camp.config.get || 1;
+            cartItems.forEach(item => {
+                const sets      = Math.floor(item.qty / (buy + get));
+                const remainder = item.qty % (buy + get);
+                const freeCount = sets * get + (remainder > buy ? remainder - buy : 0);
+                if (freeCount > 0) {
+                    const saving = freeCount * item.fiyat;
+                    discounts.push({ label: `${camp.title} — ${item.ad} (${freeCount} bedava)`, amount: saving });
+                    freeItems[item.ad] = (freeItems[item.ad] || 0) + freeCount;
+                }
+            });
+        } else if (camp.type === 'percentage') {
+            const rawTotal = cartItems.reduce((s,i)=>s+i.fiyat*i.qty, 0);
+            const saving   = rawTotal * (camp.config.percent / 100);
+            if (saving > 0) discounts.push({ label: `${camp.title} (%${camp.config.percent})`, amount: saving });
+        } else if (camp.type === 'fixed') {
+            const rawTotal = cartItems.reduce((s,i)=>s+i.fiyat*i.qty, 0);
+            const saving   = Math.min(camp.config.amount, rawTotal);
+            if (saving > 0) discounts.push({ label: `${camp.title} (-${camp.config.amount}₺)`, amount: saving });
+        }
+    });
+
+    return discounts;
+}
+
 function renderCart() {
     const container = document.getElementById('receipt-container');
     const summary   = document.getElementById('receipt-summary');
@@ -683,10 +802,10 @@ function renderCart() {
         return;
     }
 
-    let total = 0;
+    let rawTotal = 0;
     cart.forEach((item, i) => {
         const rowTotal = item.fiyat * item.qty;
-        total += rowTotal;
+        rawTotal += rowTotal;
         const row = document.createElement('div');
         row.className = 'receipt-item';
         row.innerHTML = `
@@ -699,10 +818,142 @@ function renderCart() {
             <span class="receipt-price">${rowTotal}₺</span>`;
         container.appendChild(row);
     });
-    summary.innerHTML = `<div class="receipt-total">${t.total}: ${total} ₺</div>`;
+
+    // Kampanya indirimleri
+    const activeCamps = window._activeCampaigns || [];
+    const discounts   = applyDiscounts(cart, activeCamps);
+    let totalDiscount = 0;
+
+    discounts.forEach(d => {
+        totalDiscount += d.amount;
+        const row = document.createElement('div');
+        row.className = 'discount-row';
+        row.innerHTML = `
+            <span>🎁 ${d.label}</span>
+            <span class="discount-badge">-${d.amount.toFixed(2)}₺</span>`;
+        container.appendChild(row);
+    });
+
+    const finalTotal = Math.max(0, rawTotal - totalDiscount);
+    let summaryHtml = '';
+    if (totalDiscount > 0) {
+        summaryHtml += `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-sub);margin-top:8px">
+            <span>Ara Toplam</span><span>${rawTotal.toFixed(2)} ₺</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#27AE60;font-weight:600">
+            <span>İndirim</span><span>-${totalDiscount.toFixed(2)} ₺</span></div>`;
+    }
+    summaryHtml += `<div class="receipt-total">${t.total}: ${finalTotal.toFixed(2)} ₺</div>`;
+
+    // Ödeme butonu ile sipariş gönder
+    summary.innerHTML = summaryHtml;
+    document.getElementById('btn-pay').onclick = () => placeOrder(finalTotal);
 }
 
 function clearCart() { cart = []; renderCart(); }
+
+// ══════════════════════════════════════════════════════════
+//  SİPARİŞ GÖNDER + TAKİP (#5)
+// ══════════════════════════════════════════════════════════
+let trackingInterval = null;
+
+async function placeOrder(finalTotal) {
+    if (!cart.length) return;
+
+    const memberPhone = localStorage.getItem('userPhone') || null;
+    const items = cart.map(i => ({ name:i.ad, qty:i.qty, price:i.fiyat }));
+
+    try {
+        const r = await fetch(window.location.origin + '/order', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ table_no:'Kiosk', member_phone:memberPhone, items, notes:null })
+        });
+        if (!r.ok) {
+            const err = await r.json();
+            appendMessage('assistant', '⚠️ ' + (err.detail || 'Sipariş gönderilemedi.'));
+            return;
+        }
+        const data = await r.json();
+        cart = [];
+        renderCart();
+        startOrderTracking(data.order_id);
+    } catch(e) {
+        appendMessage('assistant', '⚠️ Sipariş gönderilemedi: ' + e.message);
+    }
+}
+
+function startOrderTracking(orderId) {
+    document.getElementById('track-order-id').textContent = orderId;
+    document.getElementById('track-overlay').classList.add('show');
+    updateTrackSteps('pending');
+
+    if (trackingInterval) clearInterval(trackingInterval);
+    trackingInterval = setInterval(async () => {
+        try {
+            const r = await fetch(window.location.origin + '/order/' + orderId + '/status');
+            if (!r.ok) return;
+            const data = await r.json();
+            updateTrackSteps(data.Status);
+            if (data.Status === 'completed' || data.Status === 'cancelled') {
+                clearInterval(trackingInterval);
+                trackingInterval = null;
+            }
+        } catch(e) {}
+    }, 5000); // 5 saniyede bir kontrol
+}
+
+function updateTrackSteps(status) {
+    const order = ['pending','preparing','ready','completed'];
+    const cur   = order.indexOf(status);
+    order.forEach((s, i) => {
+        const el = document.getElementById('step-' + s);
+        if (!el) return;
+        el.classList.remove('done','active');
+        if (i < cur)       el.classList.add('done');
+        else if (i === cur) el.classList.add('active');
+    });
+    if (status === 'cancelled') {
+        document.getElementById('track-sub').textContent = '❌ Sipariş iptal edildi.';
+    }
+}
+
+function closeOrderTracking() {
+    document.getElementById('track-overlay').classList.remove('show');
+    if (trackingInterval) { clearInterval(trackingInterval); trackingInterval = null; }
+}
+
+// Kampanyaları global olarak sakla (discount hesabı için)
+async function fetchCampaigns() {
+    try {
+        const r = await fetch(window.location.origin + '/campaigns');
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        window._activeCampaigns = await r.json();
+        renderCampaigns(window._activeCampaigns);
+    } catch(e) {
+        const box = document.getElementById('campaigns-container');
+        if (box) box.innerHTML = '<div class="campaign-empty">Kampanyalar yüklenemedi.</div>';
+        window._activeCampaigns = [];
+    }
+}
+
+// ══════════════════════════════════════════════════════════
+//  MOBİL MENÜ TOGGLE (#12)
+// ══════════════════════════════════════════════════════════
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('open');
+}
+// Sidebar dışına tıklayınca kapat
+document.addEventListener('click', e => {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+    if (sidebar.classList.contains('open') &&
+        !sidebar.contains(e.target) &&
+        !e.target.closest('.menu-toggle')) {
+        sidebar.classList.remove('open');
+    }
+});
+
+
 
 // ══════════════════════════════════════════════════════════
 //  YARDIMCI
@@ -721,7 +972,7 @@ function handleKeyPress(e) { if (e.key === 'Enter') sendMessage(); }
 
 function logout() {
     localStorage.removeItem('userName');
-    window.location.href = '/';
+    window.location.href = 'perakafe_login.html';
 }
 
 // ══════════════════════════════════════════════════════════
@@ -729,7 +980,7 @@ function logout() {
 // ══════════════════════════════════════════════════════════
 async function fetchMenu() {
     try {
-        const r = await fetch('/menu');
+        const r = await fetch(window.location.origin+'/menu');
         const d = await r.json();
         renderMenu(d.menu);
     } catch(e) {
@@ -764,6 +1015,7 @@ function renderMenu(menuDb) {
         });
 
         header.onclick = () => {
+            document.querySelector('.sidebar').classList.remove('open');
             const open = list.classList.contains('active');
             document.querySelectorAll('.menu-items').forEach(el => el.classList.remove('active'));
             if (!open) list.classList.add('active');
@@ -774,6 +1026,44 @@ function renderMenu(menuDb) {
     }
     const first = cont.querySelector('.menu-items');
     if (first) first.classList.add('active');
+}
+
+
+// ══════════════════════════════════════════════════════════
+//  KAMPANYALAR
+// ══════════════════════════════════════════════════════════
+const CAMPAIGN_LABELS = {
+    buy_x_get_y: (c) => `${c.buy} ALANA ${c.get} BEDAVA`,
+    percentage:  (c) => `%${c.percent} İNDİRİM`,
+    fixed:       (c) => `${c.amount}₺ İNDİRİM`,
+};
+
+// fetchCampaigns yeni versiyona taşındı
+
+function renderCampaigns(list) {
+    const box = document.getElementById('campaigns-container');
+    if (!box) return;
+    if (!list || !list.length) {
+        box.innerHTML = '<div class="campaign-empty">Şu an aktif kampanya yok.</div>';
+        return;
+    }
+    box.innerHTML = list.map(c => {
+        const labels = {
+            buy_x_get_y: `${c.config.buy} ALANA ${c.config.get} BEDAVA`,
+            percentage:  `%${c.config.percent} İNDİRİM`,
+            fixed:       `${c.config.amount}₺ İNDİRİM`,
+        };
+        const badgeText = labels[c.type] || c.type.toUpperCase();
+        const color     = c.badge_color || '#E67E22';
+        const dates     = (c.start_date || c.end_date)
+            ? `<div class="campaign-dates">📅 ${c.start_date||'—'} → ${c.end_date||'—'}</div>` : '';
+        return `<div class="campaign-card" style="border-left-color:${color}">
+            <span class="campaign-badge" style="background:${color}">${badgeText}</span>
+            <div class="campaign-title">${c.title}</div>
+            ${c.description ? `<div class="campaign-desc">${c.description}</div>` : ''}
+            ${dates}
+        </div>`;
+    }).join('');
 }
 
 // ══════════════════════════════════════════════════════════
@@ -793,6 +1083,34 @@ function checkLangChange() {
 // Sayfa odaklanınca dil kontrolü (kullanıcı login'den geri dönünce)
 window.addEventListener('focus', checkLangChange);
 </script>
+
+<!-- SİPARİŞ TAKİP MODAL (#5) -->
+<div class="track-overlay" id="track-overlay">
+  <div class="track-card">
+    <div class="track-title">📦 Siparişiniz Takip Ediliyor</div>
+    <div class="track-sub" id="track-sub">Sipariş #<span id="track-order-id">—</span></div>
+    <div class="track-steps">
+      <div class="track-step" id="step-pending">
+        <div class="step-dot">🕐</div>
+        <div><div class="step-label">Sipariş Alındı</div></div>
+      </div>
+      <div class="track-step" id="step-preparing">
+        <div class="step-dot">☕</div>
+        <div><div class="step-label">Hazırlanıyor</div></div>
+      </div>
+      <div class="track-step" id="step-ready">
+        <div class="step-dot">✓</div>
+        <div><div class="step-label">Hazır! Tezgaha Gelin</div></div>
+      </div>
+      <div class="track-step" id="step-completed">
+        <div class="step-dot">🎉</div>
+        <div><div class="step-label">Teslim Edildi</div></div>
+      </div>
+    </div>
+    <button class="track-close-btn" onclick="closeOrderTracking()">Kapat</button>
+  </div>
+</div>
+
 <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';

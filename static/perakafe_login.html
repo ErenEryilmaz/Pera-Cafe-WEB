@@ -132,7 +132,7 @@
   <!-- LOGO -->
   <div class="logo">
     <div class="logo-mark">
-      <img src="pera_cafe_yazisiz.png" alt="Pera Kafe" onerror="this.src='https://via.placeholder.com/72?text=PK'">
+      <img src="pera cafe yazisiz.png" alt="Pera Kafe" onerror="this.src='https://via.placeholder.com/72?text=PK'">
     </div>
     <div>
       <div class="logo-text">Pera Kafe</div>
@@ -437,6 +437,9 @@ function applyLang() {
 // ══════════════════════════════════════════════════════
 //  OTURUM KONTROLÜ
 // ══════════════════════════════════════════════════════
+if (localStorage.getItem('userName')) {
+  window.location.href = 'index.html';
+}
 
 // Sayfa yüklenince dili uygula
 applyLang();
@@ -477,17 +480,17 @@ function showScreen(id){
 function goBack(t){showScreen(t);}
 function goGuest(){showScreen('s-guest');}
 function goRegister(){showScreen('s-register');}
-function goToCafe(){window.location.href = "/static/index.html";;}
+function goToCafe(){window.location.href='index.html';}
 function logout(){localStorage.removeItem('userName');window.location.reload();}
 
 function guestLogin(){
   localStorage.setItem('userName','Misafir');
-  window.location.href='/static/index.html';
+  window.location.href='index.html';
 }
 
 // ══════════════════════════════════════════════════════
 //  GİRİŞ YAP
-// ════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 async function doLogin(){
   const t   = LANG[currentLang];
   const inp = document.getElementById('phone-input');
@@ -509,7 +512,7 @@ async function doLogin(){
   btn.innerHTML=t.checking+' <span class="loading-dots"><span></span><span></span><span></span></span>';
 
   try{
-    const res=await fetch('/login',{
+    const res=await fetch('http://127.0.0.1:8000/login',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({phone:raw})
@@ -573,7 +576,7 @@ async function doRegister(){
   btn.innerHTML=t.saving+' <span class="loading-dots"><span></span><span></span><span></span></span>';
 
   try{
-    const res=await fetch('/register',{
+    const res=await fetch('http://127.0.0.1:8000/register',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({phone:raw,first_name:name,last_name:surname})
