@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pera Kafe</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="perakafe.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+    <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()" title="Menü">☰</button>
+        <div class="av-circle" id="av-circle">?</div>
+        <span class="topbar-name" id="topbar-name">—</span>
+        <span class="topbar-brand" style="margin-left:12px;padding-left:12px;border-left:1px solid rgba(255,255,255,.2)">☕ Pera Kafe</span>
+    </div>
+    <div class="topbar-right">
+        <div class="theme-swatches">
+            <div class="swatch active" style="background:#F5F1E8" data-theme="light"    onclick="setTheme('light')"></div>
+            <div class="swatch"        style="background:#1A1208" data-theme="dark"     onclick="setTheme('dark')"></div>
+            <div class="swatch"        style="background:#0D1B2A" data-theme="darkblue" onclick="setTheme('darkblue')"></div>
+            <div class="swatch"        style="background:#1B1B1B" data-theme="midnight" onclick="setTheme('midnight')"></div>
+        </div>
+        <button class="topbar-btn" id="btn-logout" onclick="logout()">
+            <i class="fas fa-sign-out-alt"></i> <span id="txt-logout"></span>
+        </button>
+    </div>
+</div>
+
+<!-- GÖVDE -->
+<div class="body-wrap">
+    <div class="sidebar">
+        <div class="sidebar-title" id="txt-menu-title">—</div>
+        <div id="menu-container">
+            <p style="text-align:center;color:var(--text-muted);font-size:13px;" id="txt-loading-menu">—</p>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="center-col">
+            <div class="avatar-wrap">
+                <div class="avatar-frame" id="model-container"></div>
+                <div class="voice-pill" id="voice-pill">
+                    <div class="voice-pill-dot wake" id="pill-dot"></div>
+                    <div class="voice-wave idle" id="pill-wave">
+                        <span style="height:4px"></span><span style="height:10px"></span>
+                        <span style="height:6px"></span><span style="height:14px"></span>
+                        <span style="height:5px"></span>
+                    </div>
+                    <span class="voice-pill-text" id="pill-text">—</span>
+                    <button class="voice-pill-btn" id="pill-btn" onclick="toggleVoiceSystem()">—</button>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="user-input" placeholder="—" onkeypress="handleKeyPress(event)">
+                <button class="send-btn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i> <span id="txt-send">—</span>
+                </button>
+            </div>
+            <div id="loading">—</div>
+        </div>
+
+        <div class="right-col">
+            <div class="box-wrapper">
+                <h3 id="txt-campaigns-title">🎁 Kampanyalar</h3>
+                <div class="campaigns-box" id="campaigns-container">
+                    <div class="campaign-empty">Yükleniyor...</div>
+                </div>
+            </div>
+            <div class="chat-history" id="chat-history" style="display:none"></div>
+            <div class="box-wrapper">
+                <h3 id="txt-receipt-title">—</h3>
+                <div class="receipt" id="receipt-container"></div>
+                <div id="receipt-summary"></div>
+                <button class="reset-btn" id="btn-pay" onclick="clearCart()">—</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SİPARİŞ TAKİP MODAL -->
+<div class="track-overlay" id="track-overlay">
+    <div class="track-card">
+        <div class="track-title">📦 Siparişiniz Takip Ediliyor</div>
+        <div class="track-sub" id="track-sub">Sipariş #<span id="track-order-id">—</span></div>
+        <div class="track-steps">
+            <div class="track-step" id="step-pending">
+                <div class="step-dot">🕐</div>
+                <div><div class="step-label">Sipariş Alındı</div></div>
+            </div>
+            <div class="track-step" id="step-preparing">
+                <div class="step-dot">☕</div>
+                <div><div class="step-label">Hazırlanıyor</div></div>
+            </div>
+            <div class="track-step" id="step-ready">
+                <div class="step-dot">✓</div>
+                <div><div class="step-label">Hazır! Tezgaha Gelin</div></div>
+            </div>
+            <div class="track-step" id="step-completed">
+                <div class="step-dot">🎉</div>
+                <div><div class="step-label">Teslim Edildi</div></div>
+            </div>
+        </div>
+        <button class="track-close-btn" onclick="closeOrderTracking()">Kapat</button>
+    </div>
+</div>
+
+<!-- JS: sıra önemli! ui-strings önce yüklenmeli -->
+<script src="js/ui-strings.js"></script>
+<script src="js/voice.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/menu.js"></script>
+<script src="js/app.js"></script>
+
+<!-- 3D Model (module tip; ayrı kalmalı) -->
+<script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    const container = document.getElementById('model-container');
+    const width  = container.clientWidth;
+    const height = container.clientHeight;
+
+    const scene  = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    camera.position.set(0, 1.5, 3);
+
+    const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+    renderer.setClearColor(0x000000, 0);
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+    directionalLight.position.set(2, 2, 5);
+    scene.add(directionalLight);
+
+    let faceMesh = null;
+    const mouthOpenIndex = 42;
+
+    const loader = new GLTFLoader();
+    loader.load('parkergirl.glb', (gltf) => {
+        const model = gltf.scene;
+        model.position.set(0, 0.2, 2.5);
+        scene.add(model);
+        model.traverse((child) => {
+            if (child.isMesh && child.name === 'Object_16') {
+                faceMesh = child;
+                console.log("Yüz mesh bağlandı.");
+            }
+        });
+    }, undefined, (error) => { console.error('Model yükleme hatası:', error); });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        if (faceMesh) {
+            if (window.isPeraSpeaking) {
+                const aciklik = (Math.sin(Date.now() * 0.015) + 1) / 2;
+                faceMesh.morphTargetInfluences[mouthOpenIndex] = aciklik * 0.7;
+            } else {
+                faceMesh.morphTargetInfluences[mouthOpenIndex] +=
+                    (0 - faceMesh.morphTargetInfluences[mouthOpenIndex]) * 0.2;
+            }
+        }
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+    });
+</script>
+
+</body>
+</html>
