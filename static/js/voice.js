@@ -1,32 +1,30 @@
 // ── Ses sistemi state ────────────────────────────────────────
-let srId           = 0;
-let commandPending = false;
-let recognition    = null;
-let currentAudio   = null;
-let voiceEnabled   = false;
+let srId         = 0;
+let recognition  = null;
+let currentAudio = null;
+let voiceEnabled = false;
 window.isPeraSpeaking = false;
 
 // ── Pill UI ──────────────────────────────────────────────────
 function setPill(mode) {
     voiceMode = mode;
     const textMap = {
-        wake:     t.pillWake,
         listen:   t.pillListen,
         process:  t.pillProcess,
         speaking: t.pillSpeak,
         off:      t.pillOff,
     };
-    document.getElementById('pill-text').textContent  = textMap[mode] || t.pillWake;
-    document.getElementById('pill-dot').className     = 'voice-pill-dot ' + mode;
+    document.getElementById('pill-text').textContent = textMap[mode] || t.pillListen;
+    document.getElementById('pill-dot').className    = 'voice-pill-dot ' + mode;
     const wave = document.getElementById('pill-wave');
     wave.className = 'voice-wave ' + (['listen','speaking'].includes(mode) ? 'active' : 'idle');
     updatePillText();
 }
 
 function updatePillText() {
+    const map = { listen:t.pillListen, process:t.pillProcess, speaking:t.pillSpeak, off:t.pillOff };
     const pillTextEl = document.getElementById('pill-text');
-    const map = { wake:t.pillWake, listen:t.pillListen, process:t.pillProcess, speaking:t.pillSpeak, off:t.pillOff };
-    if (pillTextEl) pillTextEl.textContent = map[voiceMode] || t.pillWake;
+    if (pillTextEl) pillTextEl.textContent = map[voiceMode] || t.pillListen;
 
     const pillBtn = document.getElementById('pill-btn');
     if (pillBtn) {
@@ -76,8 +74,14 @@ function startSR() {
     sr.onresult = (e) => {
         if (myId !== srId) return;
         srId++;
-        const tx = e.results[0][0].transcript.toLowerCase().trim();
-        handleTranscript(tx);
+        const tx = e.results[0][0].transcript.trim();
+        if (tx.length > 1) {
+            playBeep();
+            sendMessage(tx);   // direkt gönder, wake word yok
+        } else {
+            setPill('listen');
+            setTimeout(() => { if (voiceEnabled && myId === srId) startSR(); }, 200);
+        }
     };
 
     sr.onerror = (e) => {
@@ -99,27 +103,6 @@ function startSR() {
     }
 }
 
-function handleTranscript(tx) {
-    if (commandPending) {
-        commandPending = false;
-        if (tx.length > 1) {
-            sendMessage(tx);
-        } else {
-            setPill('wake');
-            setTimeout(() => { if (voiceEnabled) startSR(); }, 300);
-        }
-    } else {
-        if (t.wakeWords.some(w => tx.includes(w))) {
-            playBeep();
-            commandPending = true;
-            setPill('listen');
-            setTimeout(() => { if (voiceEnabled) startSR(); }, 500);
-        } else {
-            setTimeout(() => { if (voiceEnabled) startSR(); }, 100);
-        }
-    }
-}
-
 // ── Sistem başlat / durdur ───────────────────────────────────
 function initRecognition() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -129,16 +112,14 @@ function initRecognition() {
 function startVoiceSystem() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { setPill('off'); updatePillText(); return; }
-    voiceEnabled   = true;
-    commandPending = false;
-    setPill('wake');
+    voiceEnabled = true;
+    setPill('listen');
     updatePillText();
     startSR();
 }
 
 function stopVoiceSystem() {
-    voiceEnabled   = false;
-    commandPending = false;
+    voiceEnabled = false;
     srId++;
     killSR();
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
@@ -148,29 +129,28 @@ function stopVoiceSystem() {
 
 function toggleVoiceSystem() { voiceEnabled ? stopVoiceSystem() : startVoiceSystem(); }
 
-// ── Ses çalma ─────────────────────────────────────────────────
+// ── Ses çalma ────────────────────────────────────────────────
 function playAudioAndResume(b64) {
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
     currentAudio = new Audio('data:audio/mp3;base64,' + b64);
 
-    currentAudio.onplay = () => { window.isPeraSpeaking = true; };
-    currentAudio.onended = currentAudio.onerror = () => {
+    currentAudio.onplay   = () => { window.isPeraSpeaking = true; };
+    currentAudio.onended  = currentAudio.onerror = () => {
         window.isPeraSpeaking = false;
         currentAudio = null;
-        resumeWakeWord(400);
+        resumeListening(400);   // konuşma bitince hemen dinlemeye dön
     };
     currentAudio.play().catch(() => {
         window.isPeraSpeaking = false;
-        resumeWakeWord(400);
+        resumeListening(400);
     });
 }
 
-function resumeWakeWord(delay) {
+function resumeListening(delay) {
     if (!voiceEnabled) return;
     setTimeout(() => {
         if (!voiceEnabled) return;
-        commandPending = false;
-        setPill('wake');
+        setPill('listen');
         startSR();
     }, delay);
 }

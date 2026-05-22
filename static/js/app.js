@@ -19,10 +19,46 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchMenu();
     fetchCampaigns();
     initRecognition();
-    setTimeout(startVoiceSystem, 800);
+
+    // Giriş cümlesini sesli söyle, bitince dinlemeye başla
+    speakGreeting();
 });
 
-// ── Dil ───────────────────────────────────────────────────────
+// ── Giriş karşılaması ─────────────────────────────────────────
+async function speakGreeting() {
+    const greeting = t.greeting(userName);
+
+    // Ekrana yaz
+    chatMessages = [{ role: 'assistant', content: greeting }];
+    document.getElementById('chat-history').innerHTML = '';
+    appendMessage('assistant', greeting);
+
+    // Backend'den TTS al
+    try {
+        const res = await fetch(window.location.origin + '/chat', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+                messages:  [{ role: 'user', content: '__greeting__' }],
+                user_name: userName,
+                lang:      currentLang,
+            }),
+        });
+        const data = await res.json();
+
+        if (data.audio_base64) {
+            setPill('speaking');
+            voiceEnabled = true;            // ses bitince dinlemeye geçebilsin
+            playAudioAndResume(data.audio_base64);
+        } else {
+            startVoiceSystem();             // ses yoksa direkt dinlemeye başla
+        }
+    } catch(e) {
+        startVoiceSystem();
+    }
+}
+
+
 function applyLang() {
     t = UI[currentLang] || UI.tr;
     document.documentElement.lang = t.htmlLang;
@@ -39,14 +75,6 @@ function applyLang() {
     setAttr('user-input', 'placeholder', t.inputPlaceholder);
 
     updatePillText();
-
-    if (chatMessages.length === 0) {
-        const greeting = t.greeting(userName);
-        chatMessages = [{ role: 'assistant', content: greeting }];
-        document.getElementById('chat-history').innerHTML = '';
-        appendMessage('assistant', greeting);
-    }
-
     renderCart();
     fetchMenu();
 

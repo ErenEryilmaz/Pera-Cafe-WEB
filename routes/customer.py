@@ -70,11 +70,21 @@ async def chat(req: ChatRequest):
             model_name=mname,
             system_instruction=build_prompt(lang, req.user_name, menu_text),
         )
+        # Giriş karşılaması — AI yerine hazır metni TTS ile seslendir
+        last_msg = req.messages[-1].content
+        if last_msg == "__greeting__":
+            greeting_text = {
+                "tr": f"Hoş geldin {req.user_name}! Pera Kafede seni bekliyorduk, ne alırdın?" if req.user_name and req.user_name != "Misafir" else "Pera Kafede hoş geldiniz!",
+                "en": f"Welcome back, {req.user_name}! What can I get you today?" if req.user_name not in ("Misafir","Guest","") else "Welcome to Pera Cafe!",
+                "ar": f"مرحباً {req.user_name}! يسعدنا عودتك." if req.user_name not in ("Misafir","","Guest","ضيف") else "مرحباً بكم في بيرا كافيه!",
+            }.get(lang, "")
+            return {"reply": greeting_text, "cart": None, "audio_base64": make_audio_b64(greeting_text, lang)}
+
         hist = [
             {"role": "user" if m.role == "user" else "model", "parts": [m.content]}
             for m in req.messages[:-1]
         ]
-        resp = model.start_chat(history=hist).send_message(req.messages[-1].content)
+        resp = model.start_chat(history=hist).send_message(last_msg)
         bot = resp.text
 
         match = re.search(r"SIPARIS_JSON:(.*)", bot, re.DOTALL)
