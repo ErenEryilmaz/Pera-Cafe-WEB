@@ -33,7 +33,10 @@ async function speakGreeting() {
     document.getElementById('chat-history').innerHTML = '';
     appendMessage('assistant', greeting);
 
-    // Backend'den TTS al
+    // Hemen "konuşuyor" state'ine geç — kullanıcı beklemesin
+    voiceEnabled = true;
+    setPill('speaking');
+
     try {
         const res = await fetch(window.location.origin + '/chat', {
             method:  'POST',
@@ -47,11 +50,9 @@ async function speakGreeting() {
         const data = await res.json();
 
         if (data.audio_base64) {
-            setPill('speaking');
-            voiceEnabled = true;            // ses bitince dinlemeye geçebilsin
-            playAudioAndResume(data.audio_base64);
+            playAudioAndResume(data.audio_base64);   // biter → otomatik listen
         } else {
-            startVoiceSystem();             // ses yoksa direkt dinlemeye başla
+            startVoiceSystem();
         }
     } catch(e) {
         startVoiceSystem();

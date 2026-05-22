@@ -6,15 +6,20 @@ let voiceEnabled = false;
 window.isPeraSpeaking = false;
 
 // ── Pill UI ──────────────────────────────────────────────────
-function setPill(mode) {
-    voiceMode = mode;
-    const textMap = {
-        listen:   t.pillListen,
+function getPillText(mode) {
+    // pillListen fonksiyon — kullanıcı adıyla kişiselleştirilmiş
+    const listenText = typeof t.pillListen === 'function' ? t.pillListen(userName) : t.pillListen;
+    return {
+        listen:   listenText,
         process:  t.pillProcess,
         speaking: t.pillSpeak,
         off:      t.pillOff,
-    };
-    document.getElementById('pill-text').textContent = textMap[mode] || t.pillListen;
+    }[mode] || listenText;
+}
+
+function setPill(mode) {
+    voiceMode = mode;
+    document.getElementById('pill-text').textContent = getPillText(mode);
     document.getElementById('pill-dot').className    = 'voice-pill-dot ' + mode;
     const wave = document.getElementById('pill-wave');
     wave.className = 'voice-wave ' + (['listen','speaking'].includes(mode) ? 'active' : 'idle');
@@ -22,9 +27,8 @@ function setPill(mode) {
 }
 
 function updatePillText() {
-    const map = { listen:t.pillListen, process:t.pillProcess, speaking:t.pillSpeak, off:t.pillOff };
     const pillTextEl = document.getElementById('pill-text');
-    if (pillTextEl) pillTextEl.textContent = map[voiceMode] || t.pillListen;
+    if (pillTextEl) pillTextEl.textContent = getPillText(voiceMode);
 
     const pillBtn = document.getElementById('pill-btn');
     if (pillBtn) {
@@ -77,7 +81,7 @@ function startSR() {
         const tx = e.results[0][0].transcript.trim();
         if (tx.length > 1) {
             playBeep();
-            sendMessage(tx);   // direkt gönder, wake word yok
+            sendMessage(tx);
         } else {
             setPill('listen');
             setTimeout(() => { if (voiceEnabled && myId === srId) startSR(); }, 200);
@@ -134,11 +138,14 @@ function playAudioAndResume(b64) {
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
     currentAudio = new Audio('data:audio/mp3;base64,' + b64);
 
-    currentAudio.onplay   = () => { window.isPeraSpeaking = true; };
-    currentAudio.onended  = currentAudio.onerror = () => {
+    currentAudio.onplay = () => {
+        window.isPeraSpeaking = true;
+        setPill('speaking');
+    };
+    currentAudio.onended = currentAudio.onerror = () => {
         window.isPeraSpeaking = false;
         currentAudio = null;
-        resumeListening(400);   // konuşma bitince hemen dinlemeye dön
+        resumeListening(400);
     };
     currentAudio.play().catch(() => {
         window.isPeraSpeaking = false;
