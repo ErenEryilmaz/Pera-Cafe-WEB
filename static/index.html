@@ -161,7 +161,7 @@
     ];
 
     const loader = new GLTFLoader();
-    loader.load('parkergirl.glb', (gltf) => {
+    loader.load('/static/parkergirl.glb', (gltf) => {
         const model = gltf.scene;
         model.position.set(0, 0.2, 2.5);
         scene.add(model);

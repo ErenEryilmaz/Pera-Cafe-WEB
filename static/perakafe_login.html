@@ -512,7 +512,7 @@ async function doLogin(){
   btn.innerHTML=t.checking+' <span class="loading-dots"><span></span><span></span><span></span></span>';
 
   try{
-    const res=await fetch('http://127.0.0.1:8000/login',{
+    const res=await fetch('/login',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({phone:raw})
@@ -576,7 +576,7 @@ async function doRegister(){
   btn.innerHTML=t.saving+' <span class="loading-dots"><span></span><span></span><span></span></span>';
 
   try{
-    const res=await fetch('http://127.0.0.1:8000/register',{
+    const res=await fetch('/register',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({phone:raw,first_name:name,last_name:surname})
