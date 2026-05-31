@@ -149,8 +149,16 @@
     directionalLight.position.set(2, 2, 5);
     scene.add(directionalLight);
 
+    // YENİ: Yüz mesh'i değişkenimiz
     let faceMesh = null;
-    const mouthOpenIndex = 42;
+
+    // YENİ: Konuşurken aynı anda etkilenecek kasların listesi ve güç oranları
+    const konusmaKaslari = [
+        { index: 42, carpan: 0.8 }, // Asıl ağız açma kası (Maksimum %80 açılsın)
+        { index: 15, carpan: 0.3 }, // Dudak kenarı çekme/gülümseme (Maksimum %30 açılsın)
+        { index: 8,  carpan: 0.5 }  // Çene aşağı düşürme (Maksimum %50 açılsın)
+        // İstediğin kadar ekleyebilirsin! (Three.js Editor'den numaralarını bulman yeterli)
+    ];
 
     const loader = new GLTFLoader();
     loader.load('parkergirl.glb', (gltf) => {
@@ -165,20 +173,32 @@
         });
     }, undefined, (error) => { console.error('Model yükleme hatası:', error); });
 
+    // 5. Animasyon Döngüsü
     function animate() {
         requestAnimationFrame(animate);
+
         if (faceMesh) {
             if (window.isPeraSpeaking) {
-                const aciklik = (Math.sin(Date.now() * 0.015) + 1) / 2;
-                faceMesh.morphTargetInfluences[mouthOpenIndex] = aciklik * 0.7;
+                // ORKESTRA ŞEFİ: 0 ile 1 arasında sürekli inip çıkan temel ritmimiz
+                const hiz = Date.now() * 0.015;
+                const temelRitm = (Math.sin(hiz) + 1) / 2; 
+
+                // LİSTEDEKİ TÜM KASLARI AYNI ANDA ÇALIŞTIR
+                konusmaKaslari.forEach(kas => {
+                    // Temel ritmi, o kasın kendi özel gücüyle (çarpan) çarpıyoruz
+                    faceMesh.morphTargetInfluences[kas.index] = temelRitm * kas.carpan;
+                });
+
             } else {
-                faceMesh.morphTargetInfluences[mouthOpenIndex] +=
-                    (0 - faceMesh.morphTargetInfluences[mouthOpenIndex]) * 0.2;
+                // KONUŞMA BİTİNCE TÜM KASLARI YUMUŞAKÇA KAPAT
+                konusmaKaslari.forEach(kas => {
+                    faceMesh.morphTargetInfluences[kas.index] += (0 - faceMesh.morphTargetInfluences[kas.index]) * 0.2;
+                });
             }
         }
+
         renderer.render(scene, camera);
     }
-    animate();
 
     window.addEventListener('resize', () => {
         const w = container.clientWidth;
