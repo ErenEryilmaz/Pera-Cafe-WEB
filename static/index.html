@@ -143,22 +143,23 @@
     const MODEL_CONFIG = {
         parkergirl: {
             dosya:        '/static/parkergirl.glb',
-            faceMeshName: 'CC_Base_Body_1',
+            faceMeshName: 'Object_16',
             modelPos:     { x: 0,   y: 0.2, z: 2.5 },
             cameraPos:    { x: 0,   y: 1.5, z: 3   },
             kaslar: [
-                { isim: 'Mouth_Pucker_Open',  carpan: 0.8 },
-                { isim: 'Mouth_Widen_Sides',  carpan: 0.4 },
+                { index: 42, carpan: 0.8 },
+                { index: 41, carpan: 0.3 },
+                { index: 43, carpan: 0.5 },
             ],
         },
         male_model: {
             dosya:        '/static/male_model.glb',
-            faceMeshName: null,   // ← Konsola yazdırılan mesh adını buraya yaz
+            faceMeshName: 'CC_Base_Body_1',
             modelPos:     { x: 0,   y: 0,   z: 0   },
             cameraPos:    { x: 0,   y: 1.5, z: 3   },
             kaslar: [
-                // ← Konsola yazdırılan morph target isimlerini buraya ekle
-                // Örnek: { isim: 'Mouth_Pucker_Open', carpan: 0.8 }
+                { isim: 'Mouth_Pucker_Open', carpan: 0.8 },
+                { isim: 'Mouth_Widen_Sides', carpan: 0.4 },
             ],
         },
     };
@@ -218,8 +219,11 @@
                         faceMesh = child;
                         console.log(`[${key}] Yüz mesh bağlandı: "${child.name}"`);
 
-                        // isim → index çevirisi
+                        // isim → index çevirisi (sayısal index doğrudan kullanılır)
                         aktifKaslar = cfg.kaslar.flatMap(kas => {
+                            if (typeof kas.index === 'number') {
+                                return [{ index: kas.index, carpan: kas.carpan }];
+                            }
                             const idx = dict[kas.isim];
                             if (idx === undefined) {
                                 console.warn(`[${key}] Morph target bulunamadı: "${kas.isim}"`);
