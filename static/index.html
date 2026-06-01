@@ -132,7 +132,8 @@
 <!-- 3D Model (module tip; ayrı kalmalı) -->
 <script type="module">
     import * as THREE from 'three';
-    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { GLTFLoader }   from 'three/addons/loaders/GLTFLoader.js';
+    import { DRACOLoader }  from 'three/addons/loaders/DRACOLoader.js';
 
     // ── MODEL TANIMI ──────────────────────────────────────────────
     // Yeni model eklemek için buraya bir obje daha ekle.
@@ -182,71 +183,115 @@
     // ── DURUM ─────────────────────────────────────────────────────
     let faceMesh       = null;
     let aktifKaslar    = [];
-    let aktifModel     = null;   // sahneye eklenmiş THREE.Group
+    let aktifModel     = null;
+    let aktifKey       = null;
 
-    // ── MODEL YÜKLE ───────────────────────────────────────────────
-    const loader = new GLTFLoader();
+    // Cache: yüklenmiş gltf'leri sakla — tekrar indirme
+    const gltfCache = {};
 
-    function loadModel(key) {
+    // ── SPINNER ───────────────────────────────────────────────────
+    const spinner = document.createElement('div');
+    spinner.id = 'model-spinner';
+    container.appendChild(spinner);
+
+    function showSpinner() { spinner.style.display = 'block'; }
+    function hideSpinner() { spinner.style.display = 'none';  }
+
+    // ── MORPH TARGET BAĞLA ────────────────────────────────────────
+    function bindMorphTargets(key, model) {
         const cfg = MODEL_CONFIG[key];
-        if (!cfg) return;
-
-        // Önceki modeli sahneden kaldır
-        if (aktifModel) {
-            scene.remove(aktifModel);
-            aktifModel = null;
-        }
         faceMesh    = null;
-        aktifKaslar = [];   // mesh yüklenince isimden index'e çevrilecek
+        aktifKaslar = [];
 
-        // Kamerayı bu modele ayarla
+        model.traverse((child) => {
+            if (child.isMesh) {
+                const dict = child.morphTargetDictionary || {};
+                console.log(`[${key}] Mesh: "${child.name}" | morphTargets:`,
+                    Object.keys(dict).length ? dict : 'yok');
+
+                if (cfg.faceMeshName && child.name === cfg.faceMeshName) {
+                    faceMesh = child;
+                    aktifKaslar = cfg.kaslar.flatMap(kas => {
+                        if (typeof kas.index === 'number') return [{ index: kas.index, carpan: kas.carpan }];
+                        const idx = dict[kas.isim];
+                        if (idx === undefined) {
+                            console.warn(`[${key}] Morph target bulunamadı: "${kas.isim}"`);
+                            return [];
+                        }
+                        return [{ index: idx, carpan: kas.carpan }];
+                    });
+                    console.log(`[${key}] Yüz mesh bağlandı, aktif kaslar:`, aktifKaslar);
+                }
+            }
+        });
+    }
+
+    // ── MODEL YÜKLE (cache'li) ────────────────────────────────────
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/gltf/');
+    dracoLoader.preload();
+
+    const loader = new GLTFLoader();
+    loader.setDRACOLoader(dracoLoader);
+
+    function loadGLTF(key) {
+        return new Promise((resolve, reject) => {
+            if (gltfCache[key]) { resolve(gltfCache[key]); return; }
+            loader.load(MODEL_CONFIG[key].dosya,
+                gltf => { gltfCache[key] = gltf; resolve(gltf); },
+                undefined,
+                reject
+            );
+        });
+    }
+
+    function switchToModel(key) {
+        const cfg = MODEL_CONFIG[key];
+        if (!cfg || key === aktifKey) return;
+
+        showSpinner();
+
+        // Önceki modeli sahneden kaldır (ama cache'den değil)
+        if (aktifModel) { scene.remove(aktifModel); aktifModel = null; }
+        faceMesh = null; aktifKaslar = [];
+
         camera.position.set(cfg.cameraPos.x, cfg.cameraPos.y, cfg.cameraPos.z);
 
-        loader.load(cfg.dosya, (gltf) => {
-            const model = gltf.scene;
+        loadGLTF(key).then(gltf => {
+            // Cache'den gelen sahneyi klonla — aynı gltf'yi birden kullanabilmek için
+            const model = gltf.scene.clone(true);
             model.position.set(cfg.modelPos.x, cfg.modelPos.y, cfg.modelPos.z);
             scene.add(model);
             aktifModel = model;
+            aktifKey   = key;
 
-            // Tüm mesh isimlerini logla — faceMeshName ve morph isimleri bulmak için
-            model.traverse((child) => {
-                if (child.isMesh) {
-                    const dict = child.morphTargetDictionary || {};
-                    console.log(`[${key}] Mesh: "${child.name}" | morphTargets:`,
-                        Object.keys(dict).length ? dict : 'yok');
+            bindMorphTargets(key, model);
+            hideSpinner();
 
-                    if (cfg.faceMeshName && child.name === cfg.faceMeshName) {
-                        faceMesh = child;
-                        console.log(`[${key}] Yüz mesh bağlandı: "${child.name}"`);
-
-                        // isim → index çevirisi (sayısal index doğrudan kullanılır)
-                        aktifKaslar = cfg.kaslar.flatMap(kas => {
-                            if (typeof kas.index === 'number') {
-                                return [{ index: kas.index, carpan: kas.carpan }];
-                            }
-                            const idx = dict[kas.isim];
-                            if (idx === undefined) {
-                                console.warn(`[${key}] Morph target bulunamadı: "${kas.isim}"`);
-                                return [];
-                            }
-                            return [{ index: idx, carpan: kas.carpan }];
-                        });
-                        console.log(`[${key}] Aktif kaslar:`, aktifKaslar);
-                    }
-                }
-            });
-
-            // Seçici butonlarını güncelle
             document.querySelectorAll('.model-switch-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.model === key);
             });
-
             localStorage.setItem('peraModel', key);
-        }, undefined, (err) => console.error(`[${key}] Model yükleme hatası:`, err));
+        }).catch(err => {
+            console.error(`[${key}] Model yükleme hatası:`, err);
+            hideSpinner();
+        });
+    }
+
+    // ── ARKA PLANDA ÖNCEDEN YÜKLE ─────────────────────────────────
+    // Aktif olmayan modeli sessizce indirerek cache'e al
+    function preloadDiger(aktifKey) {
+        Object.keys(MODEL_CONFIG).forEach(key => {
+            if (key !== aktifKey) {
+                loadGLTF(key)
+                    .then(() => console.log(`[preload] ${key} cache'e alındı.`))
+                    .catch(() => {});
+            }
+        });
     }
 
     // window'a aç — butonlar erişsin
-    window.switchModel = (key) => loadModel(key);
+    window.switchModel = (key) => switchToModel(key);
 
     // ── BOYUT ─────────────────────────────────────────────────────
     function resizeRenderer() {
@@ -283,7 +328,10 @@
 
     // ── İLK YÜKLEME ───────────────────────────────────────────────
     const baslangicModel = localStorage.getItem('peraModel') || 'parkergirl';
-    loadModel(baslangicModel);
+    switchToModel(baslangicModel);
+
+    // İlk model yüklendikten sonra diğerini arka planda indir
+    setTimeout(() => preloadDiger(baslangicModel), 3000);
 </script>
 
 </body>
