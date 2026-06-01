@@ -54,7 +54,7 @@
                 <!-- Model seçici -->
                 <div class="model-switcher">
                     <button class="model-switch-btn active" data-model="parkergirl" onclick="switchModel('parkergirl')" title="Parker Girl">👩</button>
-                    <button class="model-switch-btn"        data-model="avatar_idle" onclick="switchModel('avatar_idle')" title="Avatar Idle">🧑</button>
+                    <button class="model-switch-btn"        data-model="male_model" onclick="switchModel('male_model')" title="Male Model">🧑</button>
                 </div>
                 <div class="voice-pill" id="voice-pill">
                     <div class="voice-pill-dot wake" id="pill-dot"></div>
@@ -137,28 +137,28 @@
     // ── MODEL TANIMI ──────────────────────────────────────────────
     // Yeni model eklemek için buraya bir obje daha ekle.
     // faceMeshName : model içindeki yüz mesh'inin adı (konsoldan bulunur)
-    // kaslar       : morph target index + çarpan listesi
+    // kaslar       : morph target isim + çarpan listesi (isim → index otomatik çevrilir)
     // modelPos     : sahne içi konum (x, y, z)
     // cameraPos    : kamera konumu (x, y, z)
     const MODEL_CONFIG = {
         parkergirl: {
             dosya:        '/static/parkergirl.glb',
-            faceMeshName: 'Object_16',
+            faceMeshName: 'CC_Base_Body_1',
             modelPos:     { x: 0,   y: 0.2, z: 2.5 },
             cameraPos:    { x: 0,   y: 1.5, z: 3   },
             kaslar: [
-                { index: 42, carpan: 0.8 },
-                { index: 41, carpan: 0.3 },
-                { index: 43, carpan: 0.5 },
+                { isim: 'Mouth_Pucker_Open',  carpan: 0.8 },
+                { isim: 'Mouth_Widen_Sides',  carpan: 0.4 },
             ],
         },
-        avatar_idle: {
-            dosya:        '/static/avatar_idle.glb',
-            faceMeshName: null,   // ← Konsola yazdırılan ismi buraya yaz
+        male_model: {
+            dosya:        '/static/male_model.glb',
+            faceMeshName: null,   // ← Konsola yazdırılan mesh adını buraya yaz
             modelPos:     { x: 0,   y: 0,   z: 0   },
             cameraPos:    { x: 0,   y: 1.5, z: 3   },
             kaslar: [
-                // ← avatar_idle morph target index'lerini buraya ekle
+                // ← Konsola yazdırılan morph target isimlerini buraya ekle
+                // Örnek: { isim: 'Mouth_Pucker_Open', carpan: 0.8 }
             ],
         },
     };
@@ -196,7 +196,7 @@
             aktifModel = null;
         }
         faceMesh    = null;
-        aktifKaslar = cfg.kaslar;
+        aktifKaslar = [];   // mesh yüklenince isimden index'e çevrilecek
 
         // Kamerayı bu modele ayarla
         camera.position.set(cfg.cameraPos.x, cfg.cameraPos.y, cfg.cameraPos.z);
@@ -207,14 +207,27 @@
             scene.add(model);
             aktifModel = model;
 
-            // Tüm mesh isimlerini logla — faceMeshName bulmak için
+            // Tüm mesh isimlerini logla — faceMeshName ve morph isimleri bulmak için
             model.traverse((child) => {
                 if (child.isMesh) {
-                    console.log(`[${key}] Mesh:`, child.name,
-                        '| morphTargets:', child.morphTargetInfluences?.length ?? 0);
+                    const dict = child.morphTargetDictionary || {};
+                    console.log(`[${key}] Mesh: "${child.name}" | morphTargets:`,
+                        Object.keys(dict).length ? dict : 'yok');
+
                     if (cfg.faceMeshName && child.name === cfg.faceMeshName) {
                         faceMesh = child;
-                        console.log(`[${key}] Yüz mesh bağlandı:`, child.name);
+                        console.log(`[${key}] Yüz mesh bağlandı: "${child.name}"`);
+
+                        // isim → index çevirisi
+                        aktifKaslar = cfg.kaslar.flatMap(kas => {
+                            const idx = dict[kas.isim];
+                            if (idx === undefined) {
+                                console.warn(`[${key}] Morph target bulunamadı: "${kas.isim}"`);
+                                return [];
+                            }
+                            return [{ index: idx, carpan: kas.carpan }];
+                        });
+                        console.log(`[${key}] Aktif kaslar:`, aktifKaslar);
                     }
                 }
             });
