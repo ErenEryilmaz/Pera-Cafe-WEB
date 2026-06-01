@@ -51,6 +51,11 @@
         <div class="center-col">
             <div class="avatar-wrap">
                 <div class="avatar-frame" id="model-container"></div>
+                <!-- Model seçici -->
+                <div class="model-switcher">
+                    <button class="model-switch-btn active" data-model="parkergirl" onclick="switchModel('parkergirl')" title="Parker Girl">👩</button>
+                    <button class="model-switch-btn"        data-model="avatar_idle" onclick="switchModel('avatar_idle')" title="Avatar Idle">🧑</button>
+                </div>
                 <div class="voice-pill" id="voice-pill">
                     <div class="voice-pill-dot wake" id="pill-dot"></div>
                     <div class="voice-wave idle" id="pill-wave">
@@ -129,86 +134,139 @@
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
+    // ── MODEL TANIMI ──────────────────────────────────────────────
+    // Yeni model eklemek için buraya bir obje daha ekle.
+    // faceMeshName : model içindeki yüz mesh'inin adı (konsoldan bulunur)
+    // kaslar       : morph target index + çarpan listesi
+    // modelPos     : sahne içi konum (x, y, z)
+    // cameraPos    : kamera konumu (x, y, z)
+    const MODEL_CONFIG = {
+        parkergirl: {
+            dosya:        '/static/parkergirl.glb',
+            faceMeshName: 'Object_16',
+            modelPos:     { x: 0,   y: 0.2, z: 2.5 },
+            cameraPos:    { x: 0,   y: 1.5, z: 3   },
+            kaslar: [
+                { index: 42, carpan: 0.8 },
+                { index: 41, carpan: 0.3 },
+                { index: 43, carpan: 0.5 },
+            ],
+        },
+        avatar_idle: {
+            dosya:        '/static/avatar_idle.glb',
+            faceMeshName: null,   // ← Konsola yazdırılan ismi buraya yaz
+            modelPos:     { x: 0,   y: 0,   z: 0   },
+            cameraPos:    { x: 0,   y: 1.5, z: 3   },
+            kaslar: [
+                // ← avatar_idle morph target index'lerini buraya ekle
+            ],
+        },
+    };
+
+    // ── SAHNE KURULUMU ────────────────────────────────────────────
     const container = document.getElementById('model-container');
-    const width  = container.clientWidth;
-    const height = container.clientHeight;
 
-    const scene  = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    camera.position.set(0, 1.5, 3);
-
-    const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+    const scene    = new THREE.Scene();
+    const camera   = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setClearColor(0x000000, 0);
-    renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
-    scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-    directionalLight.position.set(2, 2, 5);
-    scene.add(directionalLight);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight.position.set(2, 2, 5);
+    scene.add(dirLight);
 
-    // YENİ: Yüz mesh'i değişkenimiz
-    let faceMesh = null;
+    // ── DURUM ─────────────────────────────────────────────────────
+    let faceMesh       = null;
+    let aktifKaslar    = [];
+    let aktifModel     = null;   // sahneye eklenmiş THREE.Group
 
-    // YENİ: Konuşurken aynı anda etkilenecek kasların listesi ve güç oranları
-    const konusmaKaslari = [
-        { index: 42, carpan: 0.8 }, // Asıl ağız açma kası (Maksimum %80 açılsın)
-        { index: 41, carpan: 0.3 }, // Dudak kenarı çekme/gülümseme (Maksimum %30 açılsın)
-        { index: 43,  carpan: 0.5 }  // Çene aşağı düşürme (Maksimum %50 açılsın)
-        // İstediğin kadar ekleyebilirsin! (Three.js Editor'den numaralarını bulman yeterli)
-    ];
-
+    // ── MODEL YÜKLE ───────────────────────────────────────────────
     const loader = new GLTFLoader();
-    loader.load('/static/parkergirl.glb', (gltf) => {
-        const model = gltf.scene;
-        model.position.set(0, 0.2, 2.5);
-        scene.add(model);
-        model.traverse((child) => {
-            if (child.isMesh && child.name === 'Object_16') {
-                faceMesh = child;
-                console.log("Yüz mesh bağlandı.");
-            }
-        });
-    }, undefined, (error) => { console.error('Model yükleme hatası:', error); });
 
-    // 5. Animasyon Döngüsü
+    function loadModel(key) {
+        const cfg = MODEL_CONFIG[key];
+        if (!cfg) return;
+
+        // Önceki modeli sahneden kaldır
+        if (aktifModel) {
+            scene.remove(aktifModel);
+            aktifModel = null;
+        }
+        faceMesh    = null;
+        aktifKaslar = cfg.kaslar;
+
+        // Kamerayı bu modele ayarla
+        camera.position.set(cfg.cameraPos.x, cfg.cameraPos.y, cfg.cameraPos.z);
+
+        loader.load(cfg.dosya, (gltf) => {
+            const model = gltf.scene;
+            model.position.set(cfg.modelPos.x, cfg.modelPos.y, cfg.modelPos.z);
+            scene.add(model);
+            aktifModel = model;
+
+            // Tüm mesh isimlerini logla — faceMeshName bulmak için
+            model.traverse((child) => {
+                if (child.isMesh) {
+                    console.log(`[${key}] Mesh:`, child.name,
+                        '| morphTargets:', child.morphTargetInfluences?.length ?? 0);
+                    if (cfg.faceMeshName && child.name === cfg.faceMeshName) {
+                        faceMesh = child;
+                        console.log(`[${key}] Yüz mesh bağlandı:`, child.name);
+                    }
+                }
+            });
+
+            // Seçici butonlarını güncelle
+            document.querySelectorAll('.model-switch-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.model === key);
+            });
+
+            localStorage.setItem('peraModel', key);
+        }, undefined, (err) => console.error(`[${key}] Model yükleme hatası:`, err));
+    }
+
+    // window'a aç — butonlar erişsin
+    window.switchModel = (key) => loadModel(key);
+
+    // ── BOYUT ─────────────────────────────────────────────────────
+    function resizeRenderer() {
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        renderer.setSize(w, h);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+    }
+    resizeRenderer();
+    window.addEventListener('resize', resizeRenderer);
+
+    // ── ANİMASYON DÖNGÜSÜ ─────────────────────────────────────────
     function animate() {
         requestAnimationFrame(animate);
 
-        if (faceMesh) {
+        if (faceMesh && aktifKaslar.length) {
             if (window.isPeraSpeaking) {
-                // ORKESTRA ŞEFİ: 0 ile 1 arasında sürekli inip çıkan temel ritmimiz
-                const hiz = Date.now() * 0.015;
-                const temelRitm = (Math.sin(hiz) + 1) / 2; 
-
-                // LİSTEDEKİ TÜM KASLARI AYNI ANDA ÇALIŞTIR
-                konusmaKaslari.forEach(kas => {
-                    // Temel ritmi, o kasın kendi özel gücüyle (çarpan) çarpıyoruz
+                const temelRitm = (Math.sin(Date.now() * 0.015) + 1) / 2;
+                aktifKaslar.forEach(kas => {
                     faceMesh.morphTargetInfluences[kas.index] = temelRitm * kas.carpan;
                 });
-
             } else {
-                // KONUŞMA BİTİNCE TÜM KASLARI YUMUŞAKÇA KAPAT
-                konusmaKaslari.forEach(kas => {
-                    faceMesh.morphTargetInfluences[kas.index] += (0 - faceMesh.morphTargetInfluences[kas.index]) * 0.2;
+                aktifKaslar.forEach(kas => {
+                    faceMesh.morphTargetInfluences[kas.index] +=
+                        (0 - faceMesh.morphTargetInfluences[kas.index]) * 0.2;
                 });
             }
         }
 
         renderer.render(scene, camera);
     }
-
-    window.addEventListener('resize', () => {
-        const w = container.clientWidth;
-        const h = container.clientHeight;
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
-        renderer.setSize(w, h);
-    });
-
     animate();
+
+    // ── İLK YÜKLEME ───────────────────────────────────────────────
+    const baslangicModel = localStorage.getItem('peraModel') || 'parkergirl';
+    loadModel(baslangicModel);
 </script>
 
 </body>
