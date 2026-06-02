@@ -10,10 +10,26 @@ def build_prompt(lang: str, user_name: str, menu_text: str) -> str:
         "ar": f'اسم العميل: "{user_name}".' if user_name not in ("Misafir", "", "Guest", "ضيف") else "مجهول.",
     }.get(lang, "")
 
+    fmt = 'SIPARIS_JSON:[{"ad":"Ürün Adı","fiyat":10,"qty":2}]'
     return {
-        "tr": f'Sen "Pera Kafe"nin garsonusun, adın Pera. Sadece TÜRKÇE. Kısa, samimi. {n}\nMENÜ: {menu_text}\nSipariş değişince: SIPARIS_JSON:[{{"ad":"..","fiyat":0}}]',
-        "en": f'You are Pera, waiter at Pera Kafe. ENGLISH only. Short, friendly. {n}\nMENU: {menu_text}\nOrder change: SIPARIS_JSON:[{{"ad":"..","fiyat":0}}]',
-        "ar": f'أنت بيرا، نادل في بيرا كافيه. العربية فقط. {n}\nالقائمة: {menu_text}\nSIPARIS_JSON:[{{"ad":"..","fiyat":0}}]',
+        "tr": (
+            f'Sen "Pera Kafe"nin garsonusun, adın Pera. Sadece TÜRKÇE. Kısa, samimi. {n}\n'
+            f'MENÜ: {menu_text}\n'
+            f'Sepet her değiştiğinde GÜNCEL sepeti TAMAMEN gönder: {fmt}\n'
+            f'Ürün çıkarılınca o ürünü listeden SİL (qty:0 yazma). Her zaman tüm aktif sepeti gönder.'
+        ),
+        "en": (
+            f'You are Pera, waiter at Pera Kafe. ENGLISH only. Short, friendly. {n}\n'
+            f'MENU: {menu_text}\n'
+            f'When order changes send FULL updated cart: {fmt}\n'
+            f'To remove item, OMIT it from list (do not send qty:0). Always send complete active cart.'
+        ),
+        "ar": (
+            f'أنت بيرا، نادل في بيرا كافيه. العربية فقط. {n}\n'
+            f'القائمة: {menu_text}\n'
+            f'عند تغيير الطلب أرسل السلة كاملة: {fmt}\n'
+            f'لإزالة منتج احذفه من القائمة. أرسل السلة الكاملة دائماً.'
+        ),
     }.get(lang, "")
 
 
