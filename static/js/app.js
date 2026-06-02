@@ -114,7 +114,6 @@ async function sendMessage(textOverride = null) {
     chatMessages.push({ role: 'user', content: msg });
     document.getElementById('loading').style.display = 'block';
 
-    commandPending = false;
     srId++;
     killSR();
     setPill('process');
@@ -138,7 +137,7 @@ async function sendMessage(textOverride = null) {
             setPill('speaking');
             playAudioAndResume(data.audio_base64);
         } else {
-            resumeWakeWord(500);
+            resumeListening(500);
         }
     } catch(err) {
         console.error(err);
