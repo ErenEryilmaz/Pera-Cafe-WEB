@@ -295,14 +295,20 @@
 
     // ── BOYUT ─────────────────────────────────────────────────────
     function resizeRenderer() {
-        const w = container.clientWidth;
-        const h = container.clientHeight;
-        renderer.setSize(w, h);
+        const w = container.clientWidth  || container.offsetWidth  || 400;
+        const h = container.clientHeight || container.offsetHeight || 400;
+        if (w === 0 || h === 0) return;
+        renderer.setSize(w, h, false);
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
     }
-    resizeRenderer();
-    window.addEventListener('resize', resizeRenderer);
+    // ResizeObserver: container boyutu her değiştiğinde güncelle
+    if (typeof ResizeObserver !== 'undefined') {
+        new ResizeObserver(resizeRenderer).observe(container);
+    } else {
+        window.addEventListener('resize', resizeRenderer);
+    }
+    requestAnimationFrame(resizeRenderer);
 
     // ── ANİMASYON DÖNGÜSÜ ─────────────────────────────────────────
     function animate() {
