@@ -4,13 +4,29 @@ let trackingInterval = null;
 
 // ── Sepet güncelleme ─────────────────────────────────────────
 function mergeCart(aiCart) {
+    // AI bazen qty alanı gönderiyor, bazen aynı ürünü tekrarlıyor
+    // Her iki formatı da destekle; fiyat 0 veya eksik olan öğeleri at
     const grouped = {};
     aiCart.forEach(item => {
         const key = item.ad;
-        if (!grouped[key]) grouped[key] = { ad: item.ad, fiyat: item.fiyat, qty: 0 };
-        grouped[key].qty++;
+        if (!item.ad) return;
+        const fiyat = parseFloat(item.fiyat) || 0;
+
+        // Eğer AI qty gönderdiyse onu kullan, yoksa tekrar sayım yöntemi
+        if (item.qty !== undefined) {
+            const qty = parseInt(item.qty) || 0;
+            if (qty <= 0) return; // qty=0 → ürün çıkarılmış, ekleme
+            if (!grouped[key]) grouped[key] = { ad: item.ad, fiyat, qty: 0 };
+            grouped[key].qty += qty;
+        } else {
+            // Eski format: aynı ürün birden fazla satırda tekrar eder
+            if (!grouped[key]) grouped[key] = { ad: item.ad, fiyat, qty: 0 };
+            grouped[key].qty++;
+        }
     });
-    cart = Object.values(grouped);
+
+    // qty > 0 olanları al, sıfır veya negatif olanları düşür
+    cart = Object.values(grouped).filter(i => i.qty > 0);
     renderCart();
 }
 
@@ -178,6 +194,10 @@ function updateTrackSteps(status) {
 }
 
 function closeOrderTracking() {
+    document.getElementById('track-overlay').classList.remove('show');
+    if (trackingInterval) { clearInterval(trackingInterval); trackingInterval = null; }
+}
+
     document.getElementById('track-overlay').classList.remove('show');
     if (trackingInterval) { clearInterval(trackingInterval); trackingInterval = null; }
 }
