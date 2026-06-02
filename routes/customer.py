@@ -127,3 +127,20 @@ async def create_order(req: OrderCreateReq):
         return {"success": True, "order_id": order_id}
     except Exception as e:
         raise HTTPException(500, str(e))
+
+
+@router.get("/order/{order_id}/status")
+async def get_order_status(order_id: int):
+    try:
+        db = get_db()
+        cur = db.cursor(dictionary=True)
+        cur.execute("SELECT Status FROM Orders WHERE OrderID=%s", (order_id,))
+        row = cur.fetchone()
+        db.close()
+        if not row:
+            raise HTTPException(404, "Sipariş bulunamadı.")
+        return row
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, str(e))
