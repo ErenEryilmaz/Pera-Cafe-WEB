@@ -273,6 +273,16 @@
             aktifModel = model;
             aktifKey   = key;
 
+            // Modelin bounding box'ını hesapla, kamerayı otomatik ayarla
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size   = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const fov    = camera.fov * (Math.PI / 180);
+            const dist   = (maxDim / 2) / Math.tan(fov / 2) * 1.4;
+            camera.position.set(center.x, center.y, center.z + dist);
+            camera.lookAt(center);
+
             bindMorphTargets(key, model);
             hideSpinner();
 
