@@ -93,16 +93,37 @@ body { font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; background:var(-
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── MODEL SEÇİCİ ── */
-.model-switcher { display:flex; justify-content:center; gap:8px; margin-top:8px; }
-.model-switch-btn {
-    width:38px; height:38px; border-radius:50%;
-    border:2px solid var(--border); background:var(--card);
-    font-size:18px; cursor:pointer; transition:border-color .2s, transform .15s;
-    display:flex; align-items:center; justify-content:center;
+/* ── MODEL SEÇİCİ (overlay) ── */
+.model-switcher-overlay {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 20;
 }
-.model-switch-btn:hover  { border-color:var(--accent); transform:scale(1.1); }
-.model-switch-btn.active { border-color:var(--accent); background:var(--accent); }
+.model-switch-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px 6px 10px;
+    border-radius: 999px;
+    border: 2px solid rgba(255,255,255,0.55);
+    background: rgba(0,0,0,0.42);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s, border-color .2s, transform .15s;
+    white-space: nowrap;
+}
+.model-btn-icon { font-size: 15px; line-height: 1; }
+.model-btn-label { letter-spacing: .3px; }
+.model-switch-btn:hover  { background: rgba(0,0,0,0.62); border-color: var(--accent); transform: scale(1.04); }
+.model-switch-btn.active { background: var(--accent); border-color: var(--accent); }
 
 /* ── VOICE PILL ── */
 .voice-pill { position:absolute; bottom:14px; left:50%; transform:translateX(-50%); background:var(--pill-bg); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border-radius:50px; padding:7px 18px; display:flex; align-items:center; gap:10px; border:1px solid rgba(255,255,255,.15); white-space:nowrap; transition:all .3s }

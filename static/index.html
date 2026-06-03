@@ -50,11 +50,18 @@
     <div class="main-container">
         <div class="center-col">
             <div class="avatar-wrap">
-                <div class="avatar-frame" id="model-container"></div>
-                <!-- Model seçici -->
-                <div class="model-switcher">
-                    <button class="model-switch-btn active" data-model="parkergirl" onclick="switchModel('parkergirl')" title="Parker Girl">👩</button>
-                    <button class="model-switch-btn"        data-model="male_model" onclick="switchModel('male_model')" title="Male Model">🧑</button>
+                <div class="avatar-frame" id="model-container">
+                    <!-- Model seçici - cafe görseli üzerinde -->
+                    <div class="model-switcher-overlay">
+                        <button class="model-switch-btn active" data-model="parkergirl" onclick="switchModel('parkergirl')" title="Kadın">
+                            <span class="model-btn-icon">♀</span>
+                            <span class="model-btn-label">Kadın</span>
+                        </button>
+                        <button class="model-switch-btn" data-model="male_model" onclick="switchModel('male_model')" title="Erkek">
+                            <span class="model-btn-icon">♂</span>
+                            <span class="model-btn-label">Erkek</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="voice-pill" id="voice-pill">
                     <div class="voice-pill-dot wake" id="pill-dot"></div>
