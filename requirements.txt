@@ -1,7 +1,0 @@
-fastapi
-uvicorn[standard]
-google-generativeai
-mysql-connector-python
-gtts
-python-dotenv
-pydantic
