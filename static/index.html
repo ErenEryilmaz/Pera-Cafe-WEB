@@ -146,6 +146,7 @@
             dosya:        '/static/parkergirl.glb',
             faceMeshName: 'Object_16',
             modelPos:     { x: 0,   y: 0.2, z: 2.5 },
+            modelRot:     { y: Math.PI },
             cameraPos:    { x: 0,   y: 1.5, z: 3   },
             kaslar: [
                 { index: 42, carpan: 0.8 },
@@ -261,6 +262,7 @@
             // Cache'den gelen sahneyi klonla — aynı gltf'yi birden kullanabilmek için
             const model = gltf.scene.clone(true);
             model.position.set(cfg.modelPos.x, cfg.modelPos.y, cfg.modelPos.z);
+            if (cfg.modelRot) model.rotation.set(cfg.modelRot.x ?? 0, cfg.modelRot.y ?? 0, cfg.modelRot.z ?? 0);
             scene.add(model);
             aktifModel = model;
             aktifKey   = key;
