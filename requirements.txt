@@ -4,4 +4,4 @@ google-generativeai
 mysql-connector-python
 gtts
 python-dotenv
-bcrypt
+pydantic
