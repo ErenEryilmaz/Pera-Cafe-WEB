@@ -153,7 +153,7 @@
             dosya:        '/static/parkergirl.glb',
             faceMeshName: 'Object_16',
             modelPos:     { x: 0,   y: 0.2, z: 2.5 },
-            cameraPos:    { x: 0,   y: 0,   z: 5   },
+            cameraPos:    { x: 0,   y: 1.5, z: 3   },
             kaslar: [
                 { index: 42, carpan: 0.8 },
                 { index: 41, carpan: 0.3 },
@@ -164,7 +164,7 @@
             dosya:        '/static/male_model-v1.glb',
             faceMeshName: 'CC_Base_Body_1',
             modelPos:     { x: 0,   y: 0,   z: 0   },
-            cameraPos:    { x: 0,   y: 0,   z: 5   },
+            cameraPos:    { x: 0,   y: 1.5, z: 3   },
             kaslar: [
                 { isim: 'Mouth_Pucker_Open', carpan: 0.8 },
                 { isim: 'Mouth_Widen_Sides', carpan: 0.4 },
@@ -272,16 +272,6 @@
             scene.add(model);
             aktifModel = model;
             aktifKey   = key;
-
-            // Modelin bounding box'ını hesapla, kamerayı otomatik ayarla
-            const box = new THREE.Box3().setFromObject(model);
-            const center = box.getCenter(new THREE.Vector3());
-            const size   = box.getSize(new THREE.Vector3());
-            const maxDim = Math.max(size.x, size.y, size.z);
-            const fov    = camera.fov * (Math.PI / 180);
-            const dist   = (maxDim / 2) / Math.tan(fov / 2) * 1.4;
-            camera.position.set(center.x, center.y, center.z + dist);
-            camera.lookAt(center);
 
             bindMorphTargets(key, model);
             hideSpinner();
