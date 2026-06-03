@@ -51,17 +51,6 @@
         <div class="center-col">
             <div class="avatar-wrap">
                 <div class="avatar-frame" id="model-container">
-                    <!-- Model seçici - cafe görseli üzerinde -->
-                    <div class="model-switcher-overlay">
-                        <button class="model-switch-btn active" data-model="parkergirl" onclick="switchModel('parkergirl')" title="Kadın">
-                            <span class="model-btn-icon">♀</span>
-                            <span class="model-btn-label">Kadın</span>
-                        </button>
-                        <button class="model-switch-btn" data-model="male_model" onclick="switchModel('male_model')" title="Erkek">
-                            <span class="model-btn-icon">♂</span>
-                            <span class="model-btn-label">Erkek</span>
-                        </button>
-                    </div>
                 </div>
                 <div class="voice-pill" id="voice-pill">
                     <div class="voice-pill-dot wake" id="pill-dot"></div>
@@ -139,200 +128,58 @@
 <!-- 3D Model (module tip; ayrı kalmalı) -->
 <script type="module">
     import * as THREE from 'three';
-    import { GLTFLoader }   from 'three/addons/loaders/GLTFLoader.js';
-    import { DRACOLoader }  from 'three/addons/loaders/DRACOLoader.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-    // ── MODEL TANIMI ──────────────────────────────────────────────
-    // Yeni model eklemek için buraya bir obje daha ekle.
-    // faceMeshName : model içindeki yüz mesh'inin adı (konsoldan bulunur)
-    // kaslar       : morph target isim + çarpan listesi (isim → index otomatik çevrilir)
-    // modelPos     : sahne içi konum (x, y, z)
-    // cameraPos    : kamera konumu (x, y, z)
-    const MODEL_CONFIG = {
-        parkergirl: {
-            dosya:        '/static/parkergirl.glb',
-            faceMeshName: 'Object_16',
-            modelPos:     { x: 0,   y: 0.2, z: 2.5 },
-            cameraPos:    { x: 0,   y: 1.5, z: 3   },
-            kaslar: [
-                { index: 42, carpan: 0.8 },
-                { index: 41, carpan: 0.3 },
-                { index: 43, carpan: 0.5 },
-            ],
-        },
-        male_model: {
-            dosya:        '/static/male_model-v1.glb',
-            faceMeshName: 'CC_Base_Body_1',
-            modelPos:     { x: 0,   y: 0,   z: 0   },
-            cameraPos:    { x: 0,   y: 1.5, z: 3   },
-            kaslar: [
-                { isim: 'Mouth_Pucker_Open', carpan: 0.8 },
-                { isim: 'Mouth_Widen_Sides', carpan: 0.4 },
-            ],
-        },
-    };
-
-    // ── SAHNE KURULUMU ────────────────────────────────────────────
     const container = document.getElementById('model-container');
+    const width = container.clientWidth;
+    const height = container.clientHeight;
 
-    const scene    = new THREE.Scene();
-    const camera   = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    camera.position.set(0, 1.5, 3);
+
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setClearColor(0x000000, 0);
+    renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
     scene.add(new THREE.AmbientLight(0xffffff, 1.5));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
-    dirLight.position.set(2, 2, 5);
-    scene.add(dirLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+    directionalLight.position.set(2, 2, 5);
+    scene.add(directionalLight);
 
-    // ── DURUM ─────────────────────────────────────────────────────
-    let faceMesh       = null;
-    let aktifKaslar    = [];
-    let aktifModel     = null;
-    let aktifKey       = null;
-
-    // Cache: yüklenmiş gltf'leri sakla — tekrar indirme
-    const gltfCache = {};
-
-    // ── SPINNER ───────────────────────────────────────────────────
-    const spinner = document.createElement('div');
-    spinner.id = 'model-spinner';
-    container.appendChild(spinner);
-
-    function showSpinner() { spinner.style.display = 'block'; }
-    function hideSpinner() { spinner.style.display = 'none';  }
-
-    // ── MORPH TARGET BAĞLA ────────────────────────────────────────
-    function bindMorphTargets(key, model) {
-        const cfg = MODEL_CONFIG[key];
-        faceMesh    = null;
-        aktifKaslar = [];
-
-        model.traverse((child) => {
-            if (child.isMesh) {
-                const dict = child.morphTargetDictionary || {};
-                console.log(`[${key}] Mesh: "${child.name}" | morphTargets:`,
-                    Object.keys(dict).length ? dict : 'yok');
-
-                if (cfg.faceMeshName && child.name === cfg.faceMeshName) {
-                    faceMesh = child;
-                    aktifKaslar = cfg.kaslar.flatMap(kas => {
-                        if (typeof kas.index === 'number') return [{ index: kas.index, carpan: kas.carpan }];
-                        const idx = dict[kas.isim];
-                        if (idx === undefined) {
-                            console.warn(`[${key}] Morph target bulunamadı: "${kas.isim}"`);
-                            return [];
-                        }
-                        return [{ index: idx, carpan: kas.carpan }];
-                    });
-                    console.log(`[${key}] Yüz mesh bağlandı, aktif kaslar:`, aktifKaslar);
-                }
-            }
-        });
-    }
-
-    // ── MODEL YÜKLE (cache'li) ────────────────────────────────────
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/gltf/');
-    dracoLoader.preload();
+    let faceMesh = null;
+    let mouthOpenIndex = 42;
 
     const loader = new GLTFLoader();
-    loader.setDRACOLoader(dracoLoader);
-
-    function loadGLTF(key) {
-        return new Promise((resolve, reject) => {
-            if (gltfCache[key]) { resolve(gltfCache[key]); return; }
-            loader.load(MODEL_CONFIG[key].dosya,
-                gltf => { gltfCache[key] = gltf; resolve(gltf); },
-                undefined,
-                reject
-            );
-        });
-    }
-
-    function switchToModel(key) {
-        const cfg = MODEL_CONFIG[key];
-        if (!cfg || key === aktifKey) return;
-
-        showSpinner();
-
-        // Önceki modeli sahneden kaldır (ama cache'den değil)
-        if (aktifModel) { scene.remove(aktifModel); aktifModel = null; }
-        faceMesh = null; aktifKaslar = [];
-
-        camera.position.set(cfg.cameraPos.x, cfg.cameraPos.y, cfg.cameraPos.z);
-
-        loadGLTF(key).then(gltf => {
-            // Cache'den gelen sahneyi klonla — aynı gltf'yi birden kullanabilmek için
-            const model = gltf.scene.clone(true);
-            model.position.set(cfg.modelPos.x, cfg.modelPos.y, cfg.modelPos.z);
-            if (cfg.modelRot) model.rotation.set(cfg.modelRot.x ?? 0, cfg.modelRot.y ?? 0, cfg.modelRot.z ?? 0);
+    loader.load(
+        '/static/parkergirl.glb',
+        function (gltf) {
+            const model = gltf.scene;
+            model.position.set(0, 0.2, 2.5);
             scene.add(model);
-            aktifModel = model;
-            aktifKey   = key;
 
-            bindMorphTargets(key, model);
-            hideSpinner();
-
-            document.querySelectorAll('.model-switch-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.model === key);
+            model.traverse((child) => {
+                if (child.isMesh && child.name === 'Object_16') {
+                    faceMesh = child;
+                }
             });
-            localStorage.setItem('peraModel', key);
-        }).catch(err => {
-            console.error(`[${key}] Model yükleme hatası:`, err);
-            hideSpinner();
-        });
-    }
+        },
+        undefined,
+        function (error) { console.error('Model yükleme hatası:', error); }
+    );
 
-    // ── ARKA PLANDA ÖNCEDEN YÜKLE ─────────────────────────────────
-    // Aktif olmayan modeli sessizce indirerek cache'e al
-    function preloadDiger(aktifKey) {
-        Object.keys(MODEL_CONFIG).forEach(key => {
-            if (key !== aktifKey) {
-                loadGLTF(key)
-                    .then(() => console.log(`[preload] ${key} cache'e alındı.`))
-                    .catch(() => {});
-            }
-        });
-    }
-
-    // window'a aç — butonlar erişsin
-    window.switchModel = (key) => switchToModel(key);
-
-    // ── BOYUT ─────────────────────────────────────────────────────
-    function resizeRenderer() {
-        const w = container.clientWidth  || container.offsetWidth  || 400;
-        const h = container.clientHeight || container.offsetHeight || 400;
-        if (w === 0 || h === 0) return;
-        renderer.setSize(w, h, false);
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
-    }
-    // ResizeObserver: container boyutu her değiştiğinde güncelle
-    if (typeof ResizeObserver !== 'undefined') {
-        new ResizeObserver(resizeRenderer).observe(container);
-    } else {
-        window.addEventListener('resize', resizeRenderer);
-    }
-    requestAnimationFrame(resizeRenderer);
-
-    // ── ANİMASYON DÖNGÜSÜ ─────────────────────────────────────────
     function animate() {
         requestAnimationFrame(animate);
 
-        if (faceMesh && aktifKaslar.length) {
+        if (faceMesh && mouthOpenIndex !== -1) {
             if (window.isPeraSpeaking) {
-                const temelRitm = (Math.sin(Date.now() * 0.015) + 1) / 2;
-                aktifKaslar.forEach(kas => {
-                    faceMesh.morphTargetInfluences[kas.index] = temelRitm * kas.carpan;
-                });
+                const aciklik = (Math.sin(Date.now() * 0.015) + 1) / 2;
+                faceMesh.morphTargetInfluences[mouthOpenIndex] = aciklik * 0.7;
             } else {
-                aktifKaslar.forEach(kas => {
-                    faceMesh.morphTargetInfluences[kas.index] +=
-                        (0 - faceMesh.morphTargetInfluences[kas.index]) * 0.2;
-                });
+                faceMesh.morphTargetInfluences[mouthOpenIndex] +=
+                    (0 - faceMesh.morphTargetInfluences[mouthOpenIndex]) * 0.2;
             }
         }
 
@@ -340,12 +187,13 @@
     }
     animate();
 
-    // ── İLK YÜKLEME ───────────────────────────────────────────────
-    const baslangicModel = localStorage.getItem('peraModel') || 'parkergirl';
-    switchToModel(baslangicModel);
-
-    // İlk model yüklendikten sonra diğerini arka planda indir
-    setTimeout(() => preloadDiger(baslangicModel), 3000);
+    window.addEventListener('resize', () => {
+        const newWidth = container.clientWidth;
+        const newHeight = container.clientHeight;
+        camera.aspect = newWidth / newHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(newWidth, newHeight);
+    });
 </script>
 
 </body>
