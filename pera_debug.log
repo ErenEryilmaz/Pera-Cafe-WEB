@@ -416,3 +416,47 @@
 2026-06-05 02:09:22,444 [DEBUG] status-0: 200
 2026-06-05 02:09:22,445 [DEBUG] part-0 written to <_io.BytesIO object at 0x000001E809C77CE0>
 2026-06-05 02:09:22,445 [DEBUG] part-0 created
+2026-06-05 02:26:14,366 [DEBUG] text: Hoþ geldin Eren! Pera Kafede seni bekliyorduk, ne alýrdýn?
+2026-06-05 02:26:14,366 [DEBUG] tld: com
+2026-06-05 02:26:14,366 [DEBUG] lang: tr
+2026-06-05 02:26:14,366 [DEBUG] slow: False
+2026-06-05 02:26:14,366 [DEBUG] lang_check: True
+2026-06-05 02:26:14,367 [DEBUG] pre_processor_funcs: [<function tone_marks at 0x000001E8098BE160>, <function end_of_line at 0x000001E8098BF1A0>, <function abbreviations at 0x000001E8098BF2E0>, <function word_sub at 0x000001E8098BF380>]
+2026-06-05 02:26:14,370 [DEBUG] timeout: None
+2026-06-05 02:26:14,370 [DEBUG] langs: {'af': 'Afrikaans', 'am': 'Amharic', 'ar': 'Arabic', 'bg': 'Bulgarian', 'bn': 'Bengali', 'bs': 'Bosnian', 'ca': 'Catalan', 'cs': 'Czech', 'cy': 'Welsh', 'da': 'Danish', 'de': 'German', 'el': 'Greek', 'en': 'English', 'es': 'Spanish', 'et': 'Estonian', 'eu': 'Basque', 'fi': 'Finnish', 'fr': 'French', 'fr-CA': 'French (Canada)', 'gl': 'Galician', 'gu': 'Gujarati', 'ha': 'Hausa', 'hi': 'Hindi', 'hr': 'Croatian', 'hu': 'Hungarian', 'id': 'Indonesian', 'is': 'Icelandic', 'it': 'Italian', 'iw': 'Hebrew', 'ja': 'Japanese', 'jw': 'Javanese', 'km': 'Khmer', 'kn': 'Kannada', 'ko': 'Korean', 'la': 'Latin', 'lt': 'Lithuanian', 'lv': 'Latvian', 'ml': 'Malayalam', 'mr': 'Marathi', 'ms': 'Malay', 'my': 'Myanmar (Burmese)', 'ne': 'Nepali', 'nl': 'Dutch', 'no': 'Norwegian', 'pa': 'Punjabi (Gurmukhi)', 'pl': 'Polish', 'pt': 'Portuguese (Brazil)', 'pt-PT': 'Portuguese (Portugal)', 'ro': 'Romanian', 'ru': 'Russian', 'si': 'Sinhala', 'sk': 'Slovak', 'sq': 'Albanian', 'sr': 'Serbian', 'su': 'Sundanese', 'sv': 'Swedish', 'sw': 'Swahili', 'ta': 'Tamil', 'te': 'Telugu', 'th': 'Thai', 'tl': 'Filipino', 'tr': 'Turkish', 'uk': 'Ukrainian', 'ur': 'Urdu', 'vi': 'Vietnamese', 'yue': 'Cantonese', 'zh-CN': 'Chinese (Simplified)', 'zh-TW': 'Chinese (Mandarin/Taiwan)', 'zh': 'Chinese (Mandarin)'}
+2026-06-05 02:26:14,370 [DEBUG] pre-processing: <function tone_marks at 0x000001E8098BE160>
+2026-06-05 02:26:14,371 [DEBUG] pre-processing: <function end_of_line at 0x000001E8098BF1A0>
+2026-06-05 02:26:14,371 [DEBUG] pre-processing: <function abbreviations at 0x000001E8098BF2E0>
+2026-06-05 02:26:14,371 [DEBUG] pre-processing: <function word_sub at 0x000001E8098BF380>
+2026-06-05 02:26:14,371 [DEBUG] text_parts: ['Hoþ geldin Eren!  Pera Kafede seni bekliyorduk, ne alýrdýn?']
+2026-06-05 02:26:14,371 [DEBUG] text_parts: 1
+2026-06-05 02:26:14,371 [DEBUG] data-0: f.req=%5B%5B%5B%22jQ1olc%22%2C%22%5B%5C%22Ho%5C%5Cu015f%20geldin%20Eren%21%20%20Pera%20Kafede%20seni%20bekliyorduk%2C%20ne%20al%5C%5Cu0131rd%5C%5Cu0131n%3F%5C%22%2C%5C%22tr%5C%22%2Cnull%2C%5C%22null%5C%22%5D%22%2Cnull%2C%22generic%22%5D%5D%5D&
+2026-06-05 02:26:14,371 [DEBUG] Starting new HTTPS connection (1): translate.google.com:443
+2026-06-05 02:26:14,687 [DEBUG] https://translate.google.com:443 "POST /_/TranslateWebserverUi/data/batchexecute HTTP/1.1" 200 None
+2026-06-05 02:26:14,773 [DEBUG] headers-0: {'Referer': 'http://translate.google.com/', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36', 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8', 'Content-Length': '243'}
+2026-06-05 02:26:14,773 [DEBUG] url-0: https://translate.google.com/_/TranslateWebserverUi/data/batchexecute
+2026-06-05 02:26:14,773 [DEBUG] status-0: 200
+2026-06-05 02:26:14,775 [DEBUG] part-0 written to <_io.BytesIO object at 0x000001E809AC2520>
+2026-06-05 02:26:14,775 [DEBUG] part-0 created
+2026-06-05 02:27:58,200 [DEBUG] text: Hoþ geldin Eren! Pera Kafede seni bekliyorduk, ne alýrdýn?
+2026-06-05 02:27:58,200 [DEBUG] tld: com
+2026-06-05 02:27:58,200 [DEBUG] lang: tr
+2026-06-05 02:27:58,201 [DEBUG] slow: False
+2026-06-05 02:27:58,201 [DEBUG] lang_check: True
+2026-06-05 02:27:58,201 [DEBUG] pre_processor_funcs: [<function tone_marks at 0x000001E8098BE160>, <function end_of_line at 0x000001E8098BF1A0>, <function abbreviations at 0x000001E8098BF2E0>, <function word_sub at 0x000001E8098BF380>]
+2026-06-05 02:27:58,207 [DEBUG] timeout: None
+2026-06-05 02:27:58,207 [DEBUG] langs: {'af': 'Afrikaans', 'am': 'Amharic', 'ar': 'Arabic', 'bg': 'Bulgarian', 'bn': 'Bengali', 'bs': 'Bosnian', 'ca': 'Catalan', 'cs': 'Czech', 'cy': 'Welsh', 'da': 'Danish', 'de': 'German', 'el': 'Greek', 'en': 'English', 'es': 'Spanish', 'et': 'Estonian', 'eu': 'Basque', 'fi': 'Finnish', 'fr': 'French', 'fr-CA': 'French (Canada)', 'gl': 'Galician', 'gu': 'Gujarati', 'ha': 'Hausa', 'hi': 'Hindi', 'hr': 'Croatian', 'hu': 'Hungarian', 'id': 'Indonesian', 'is': 'Icelandic', 'it': 'Italian', 'iw': 'Hebrew', 'ja': 'Japanese', 'jw': 'Javanese', 'km': 'Khmer', 'kn': 'Kannada', 'ko': 'Korean', 'la': 'Latin', 'lt': 'Lithuanian', 'lv': 'Latvian', 'ml': 'Malayalam', 'mr': 'Marathi', 'ms': 'Malay', 'my': 'Myanmar (Burmese)', 'ne': 'Nepali', 'nl': 'Dutch', 'no': 'Norwegian', 'pa': 'Punjabi (Gurmukhi)', 'pl': 'Polish', 'pt': 'Portuguese (Brazil)', 'pt-PT': 'Portuguese (Portugal)', 'ro': 'Romanian', 'ru': 'Russian', 'si': 'Sinhala', 'sk': 'Slovak', 'sq': 'Albanian', 'sr': 'Serbian', 'su': 'Sundanese', 'sv': 'Swedish', 'sw': 'Swahili', 'ta': 'Tamil', 'te': 'Telugu', 'th': 'Thai', 'tl': 'Filipino', 'tr': 'Turkish', 'uk': 'Ukrainian', 'ur': 'Urdu', 'vi': 'Vietnamese', 'yue': 'Cantonese', 'zh-CN': 'Chinese (Simplified)', 'zh-TW': 'Chinese (Mandarin/Taiwan)', 'zh': 'Chinese (Mandarin)'}
+2026-06-05 02:27:58,207 [DEBUG] pre-processing: <function tone_marks at 0x000001E8098BE160>
+2026-06-05 02:27:58,207 [DEBUG] pre-processing: <function end_of_line at 0x000001E8098BF1A0>
+2026-06-05 02:27:58,207 [DEBUG] pre-processing: <function abbreviations at 0x000001E8098BF2E0>
+2026-06-05 02:27:58,208 [DEBUG] pre-processing: <function word_sub at 0x000001E8098BF380>
+2026-06-05 02:27:58,208 [DEBUG] text_parts: ['Hoþ geldin Eren!  Pera Kafede seni bekliyorduk, ne alýrdýn?']
+2026-06-05 02:27:58,208 [DEBUG] text_parts: 1
+2026-06-05 02:27:58,208 [DEBUG] data-0: f.req=%5B%5B%5B%22jQ1olc%22%2C%22%5B%5C%22Ho%5C%5Cu015f%20geldin%20Eren%21%20%20Pera%20Kafede%20seni%20bekliyorduk%2C%20ne%20al%5C%5Cu0131rd%5C%5Cu0131n%3F%5C%22%2C%5C%22tr%5C%22%2Cnull%2C%5C%22null%5C%22%5D%22%2Cnull%2C%22generic%22%5D%5D%5D&
+2026-06-05 02:27:58,209 [DEBUG] Starting new HTTPS connection (1): translate.google.com:443
+2026-06-05 02:27:58,545 [DEBUG] https://translate.google.com:443 "POST /_/TranslateWebserverUi/data/batchexecute HTTP/1.1" 200 None
+2026-06-05 02:27:58,646 [DEBUG] headers-0: {'Referer': 'http://translate.google.com/', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36', 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8', 'Content-Length': '243'}
+2026-06-05 02:27:58,646 [DEBUG] url-0: https://translate.google.com/_/TranslateWebserverUi/data/batchexecute
+2026-06-05 02:27:58,646 [DEBUG] status-0: 200
+2026-06-05 02:27:58,648 [DEBUG] part-0 written to <_io.BytesIO object at 0x000001E809CA4900>
+2026-06-05 02:27:58,648 [DEBUG] part-0 created
