@@ -193,7 +193,7 @@
             scene.add(model);
 
             model.traverse((child) => {
-                if (child.isMesh && child.name === cfg.meshName) {
+                if (child.isMesh && child.name === cfg.faceMeshName) {
                     faceMesh = child;
                 }
             });
