@@ -181,7 +181,7 @@
     const cfg = MODEL_CONFIG[gender] || MODEL_CONFIG.female;
 
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+    dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/gltf/');
 
     const loader = new GLTFLoader();
     loader.setDRACOLoader(dracoLoader);
