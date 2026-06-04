@@ -129,6 +129,7 @@
 <script type="module">
     import * as THREE from 'three';
     import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
     const container = document.getElementById('model-container');
     const width = container.clientWidth;
@@ -168,7 +169,7 @@
         male: {
             dosya:        '/static/male_model-v1.glb',
             faceMeshName: 'CC_Base_Body_1',
-            modelPos:     { x: 0,   y: 0,   z: 5   },
+            modelPos:     { x: 0,   y: -0.1, z: 2.6 },
 
             kaslar: [
                 { isim: 'Mouth_Pucker_Open', carpan: 0.8 },
@@ -179,12 +180,16 @@
 
     const cfg = MODEL_CONFIG[gender] || MODEL_CONFIG.female;
 
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+
     const loader = new GLTFLoader();
+    loader.setDRACOLoader(dracoLoader);
     loader.load(
-        cfg.path,
+        cfg.dosya,
         function (gltf) {
             const model = gltf.scene;
-            model.position.set(...cfg.position);
+            model.position.set(cfg.modelPos.x, cfg.modelPos.y, cfg.modelPos.z);
             scene.add(model);
 
             model.traverse((child) => {

@@ -497,6 +497,48 @@ if (localStorage.getItem('userName')) {
 // Sayfa yüklenince dili uygula
 applyLang();
 
+// ── Model preload ─────────────────────────────────────────────
+const MODEL_PATHS = {
+  female: '/static/parkergirl.glb',
+  male:   '/static/male_model-v1.glb',
+};
+
+let modelReady = false;
+let modelReadyCallbacks = [];
+
+function onModelReady(cb) {
+  if (modelReady) { cb(); return; }
+  modelReadyCallbacks.push(cb);
+}
+
+function preloadModel(gender) {
+  const path = MODEL_PATHS[gender];
+  if (!path) return;
+  modelReady = false;
+  fetch(path, { priority: 'low' })
+    .then(() => {
+      modelReady = true;
+      modelReadyCallbacks.forEach(cb => cb());
+      modelReadyCallbacks = [];
+    })
+    .catch(() => {
+      // Hata olsa da devam et
+      modelReady = true;
+      modelReadyCallbacks.forEach(cb => cb());
+      modelReadyCallbacks = [];
+    });
+}
+
+// Sayfa açılınca mevcut seçimi preload et
+preloadModel(currentGender);
+
+// setGender override — seçim değişince yeni modeli preload et
+const _origSetGender = setGender;
+function setGender(gender) {
+  _origSetGender(gender);
+  preloadModel(gender);
+}
+
 // ══════════════════════════════════════════════════════
 //  TELEFON FORMAT
 // ══════════════════════════════════════════════════════
@@ -533,7 +575,21 @@ function showScreen(id){
 function goBack(t){showScreen(t);}
 function goGuest(){showScreen('s-guest');}
 function goRegister(){showScreen('s-register');}
-function goToCafe(){window.location.href='index.html';}
+function goToCafe(){
+  const btn = document.getElementById('btn-start');
+  if (!modelReady) {
+    const t = LANG[currentLang];
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Garson hazırlanıyor <span class="loading-dots"><span></span><span></span><span></span></span>';
+    onModelReady(() => {
+      btn.disabled = false;
+      btn.textContent = t.btnStart;
+      window.location.href = 'index.html';
+    });
+  } else {
+    window.location.href = 'index.html';
+  }
+}
 function logout(){localStorage.removeItem('userName');window.location.reload();}
 
 function guestLogin(){
@@ -579,6 +635,16 @@ async function doLogin(){
         localStorage.setItem('userName',data.name);
         document.getElementById('member-name').textContent='👋 '+data.name;
         showScreen('s-welcome');
+        // Model hazır değilse butonu loading yap
+        if (!modelReady) {
+          const startBtn = document.getElementById('btn-start');
+          startBtn.disabled = true;
+          startBtn.innerHTML = '⏳ Garson hazırlanıyor <span class="loading-dots"><span></span><span></span><span></span></span>';
+          onModelReady(() => {
+            startBtn.disabled = false;
+            startBtn.textContent = t.btnStart;
+          });
+        }
       } else {
         wrap.classList.add('error');
         errTxt.textContent=t.errAskRegister;
