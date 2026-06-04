@@ -152,16 +152,25 @@
     let faceMesh = null;
     let mouthOpenIndex = 42;
 
+    const gender = localStorage.getItem('peraGender') || 'female';
+
+    const MODEL_CONFIG = {
+        female: { path: '/static/parkergirl.glb',  meshName: 'Object_16', position: [0, 0.2, 2.5] },
+        male:   { path: '/static/malemodel.glb',   meshName: 'Object_16', position: [0, 0.2, 2.5] },
+    };
+
+    const cfg = MODEL_CONFIG[gender] || MODEL_CONFIG.female;
+
     const loader = new GLTFLoader();
     loader.load(
-        '/static/parkergirl.glb',
+        cfg.path,
         function (gltf) {
             const model = gltf.scene;
-            model.position.set(0, 0.2, 2.5);
+            model.position.set(...cfg.position);
             scene.add(model);
 
             model.traverse((child) => {
-                if (child.isMesh && child.name === 'Object_16') {
+                if (child.isMesh && child.name === cfg.meshName) {
                     faceMesh = child;
                 }
             });
