@@ -110,6 +110,26 @@
   .loading-dots span:nth-child(2){animation-delay:.15s}
   .loading-dots span:nth-child(3){animation-delay:.3s}
   @keyframes dot{0%,80%,100%{opacity:0}40%{opacity:1}}
+
+  /* ── CİNSİYET SEÇİCİ ── */
+  .gender-bar{display:flex;gap:10px;margin-bottom:20px}
+  .gender-btn{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:10px 16px;border-radius:var(--border-radius-md);
+    border:1.5px solid var(--color-border-secondary);
+    background:transparent;
+    font-family:var(--font-sans);font-size:14px;font-weight:500;
+    color:var(--color-text-secondary);cursor:pointer;
+    transition:all .2s;
+  }
+  .gender-btn:hover{background:var(--color-background-secondary)}
+  .gender-btn.active{
+    background:var(--color-primary);
+    border-color:var(--color-primary);
+    color:#fff;
+    box-shadow:0 4px 12px var(--color-primary-shadow);
+  }
+  .gender-icon{font-size:18px;line-height:1}
   </style>
 </head>
 <body>
@@ -144,6 +164,16 @@
   <div id="s-login" class="screen active">
     <h2 id="txt-welcome-title">Hoş geldiniz</h2>
     <p class="sub" id="txt-welcome-sub">Telefon numaranızla giriş yapın veya misafir olarak devam edin.</p>
+    <div class="gender-bar">
+      <button class="gender-btn active" id="gender-female" onclick="setGender('female')">
+        <span class="gender-icon">👩</span>
+        <span id="txt-gender-female">Kadın</span>
+      </button>
+      <button class="gender-btn" id="gender-male" onclick="setGender('male')">
+        <span class="gender-icon">👨</span>
+        <span id="txt-gender-male">Erkek</span>
+      </button>
+    </div>
     <div class="field">
       <label id="txt-phone-label">Telefon numarası</label>
       <div class="phone-wrap" id="phone-wrap">
@@ -248,6 +278,8 @@
 // ══════════════════════════════════════════════════════
 const LANG = {
   tr: {
+    genderFemale:     'Kadın',
+    genderMale:       'Erkek',
     logoSub:          'sipariş sistemi',
     welcomeTitle:     'Hoş geldiniz',
     welcomeSub:       'Telefon numaranızla giriş yapın veya misafir olarak devam edin.',
@@ -291,6 +323,8 @@ const LANG = {
     speechLang:       'tr-TR',
   },
   en: {
+    genderFemale:     'Female',
+    genderMale:       'Male',
     logoSub:          'order system',
     welcomeTitle:     'Welcome',
     welcomeSub:       'Sign in with your phone number or continue as guest.',
@@ -334,6 +368,8 @@ const LANG = {
     speechLang:       'en-US',
   },
   ar: {
+    genderFemale:     'أنثى',
+    genderMale:       'ذكر',
     logoSub:          'نظام الطلبات',
     welcomeTitle:     'أهلاً وسهلاً',
     welcomeSub:       'سجّل الدخول برقم هاتفك أو تابع كضيف.',
@@ -401,6 +437,8 @@ function applyLang() {
 
   // Metinleri güncelle
   const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  set('txt-gender-female', t.genderFemale);
+  set('txt-gender-male',   t.genderMale);
   set('logo-sub',          t.logoSub);
   set('txt-welcome-title', t.welcomeTitle);
   set('txt-welcome-sub',   t.welcomeSub);
@@ -433,6 +471,21 @@ function applyLang() {
   set('btn-guest-start',   t.btnGuestStart);
   set('btn-guest-back',    t.btnGuestBack);
 }
+
+// ══════════════════════════════════════════════════════
+//  CİNSİYET SEÇİMİ
+// ══════════════════════════════════════════════════════
+let currentGender = localStorage.getItem('peraGender') || 'female';
+
+function setGender(gender) {
+  currentGender = gender;
+  localStorage.setItem('peraGender', gender);
+  document.getElementById('gender-female').classList.toggle('active', gender === 'female');
+  document.getElementById('gender-male').classList.toggle('active', gender === 'male');
+}
+
+// Sayfa yüklenince seçili gender'ı yansıt
+setGender(currentGender);
 
 // ══════════════════════════════════════════════════════
 //  OTURUM KONTROLÜ

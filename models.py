@@ -23,6 +23,7 @@ class ChatRequest(BaseModel):
     messages: list[Message]
     user_name: str = ""
     lang: str = "tr"
+    gender: str = "female"  # "female" | "male"
 
 
 class OrderCreateReq(BaseModel):

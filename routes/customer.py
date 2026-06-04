@@ -68,7 +68,7 @@ async def chat(req: ChatRequest):
 
         model = genai.GenerativeModel(
             model_name=mname,
-            system_instruction=build_prompt(lang, req.user_name, menu_text),
+            system_instruction=build_prompt(lang, req.user_name, menu_text, req.gender),
         )
         # Giriş karşılaması — AI yerine hazır metni TTS ile seslendir
         last_msg = req.messages[-1].content

@@ -3,6 +3,7 @@ const userName = localStorage.getItem('userName') || '';
 if (!userName) { window.location.href = 'perakafe_login.html'; }
 
 let currentLang  = localStorage.getItem('peraLang') || 'tr';
+let currentGender = localStorage.getItem('peraGender') || 'female';
 let t            = UI[currentLang] || UI.tr;
 let chatMessages = [];
 let voiceMode    = 'off';
@@ -45,6 +46,7 @@ async function speakGreeting() {
                 messages:  [{ role: 'user', content: '__greeting__' }],
                 user_name: userName,
                 lang:      currentLang,
+                gender:    currentGender,
             }),
         });
         const data = await res.json();
@@ -122,7 +124,7 @@ async function sendMessage(textOverride = null) {
         const res = await fetch(window.location.origin + '/chat', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ messages: chatMessages, user_name: userName, lang: currentLang }),
+            body:    JSON.stringify({ messages: chatMessages, user_name: userName, lang: currentLang, gender: currentGender }),
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
