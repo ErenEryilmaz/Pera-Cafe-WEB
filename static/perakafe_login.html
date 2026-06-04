@@ -472,31 +472,6 @@ function applyLang() {
   set('btn-guest-back',    t.btnGuestBack);
 }
 
-// ══════════════════════════════════════════════════════
-//  CİNSİYET SEÇİMİ
-// ══════════════════════════════════════════════════════
-let currentGender = localStorage.getItem('peraGender') || 'female';
-
-function setGender(gender) {
-  currentGender = gender;
-  localStorage.setItem('peraGender', gender);
-  document.getElementById('gender-female').classList.toggle('active', gender === 'female');
-  document.getElementById('gender-male').classList.toggle('active', gender === 'male');
-}
-
-// Sayfa yüklenince seçili gender'ı yansıt
-setGender(currentGender);
-
-// ══════════════════════════════════════════════════════
-//  OTURUM KONTROLÜ
-// ══════════════════════════════════════════════════════
-if (localStorage.getItem('userName')) {
-  window.location.href = 'index.html';
-}
-
-// Sayfa yüklenince dili uygula
-applyLang();
-
 // ── Model preload ─────────────────────────────────────────────
 const MODEL_PATHS = {
   female: '/static/parkergirl.glb',
@@ -522,22 +497,37 @@ function preloadModel(gender) {
       modelReadyCallbacks = [];
     })
     .catch(() => {
-      // Hata olsa da devam et
       modelReady = true;
       modelReadyCallbacks.forEach(cb => cb());
       modelReadyCallbacks = [];
     });
 }
 
-// Sayfa açılınca mevcut seçimi preload et
-preloadModel(currentGender);
+// ══════════════════════════════════════════════════════
+//  CİNSİYET SEÇİMİ
+// ══════════════════════════════════════════════════════
+let currentGender = localStorage.getItem('peraGender') || 'female';
 
-// setGender override — seçim değişince yeni modeli preload et
-const _origSetGender = setGender;
 function setGender(gender) {
-  _origSetGender(gender);
+  currentGender = gender;
+  localStorage.setItem('peraGender', gender);
+  document.getElementById('gender-female').classList.toggle('active', gender === 'female');
+  document.getElementById('gender-male').classList.toggle('active', gender === 'male');
   preloadModel(gender);
 }
+
+// Sayfa yüklenince seçili gender'ı yansıt + preload başlat
+setGender(currentGender);
+
+// ══════════════════════════════════════════════════════
+//  OTURUM KONTROLÜ
+// ══════════════════════════════════════════════════════
+if (localStorage.getItem('userName')) {
+  window.location.href = 'index.html';
+}
+
+// Sayfa yüklenince dili uygula
+applyLang();
 
 // ══════════════════════════════════════════════════════
 //  TELEFON FORMAT
