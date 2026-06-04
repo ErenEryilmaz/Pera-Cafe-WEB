@@ -155,8 +155,26 @@
     const gender = localStorage.getItem('peraGender') || 'female';
 
     const MODEL_CONFIG = {
-        female: { path: '/static/parkergirl.glb',  meshName: 'Object_16', position: [0, 0.2, 2.5] },
-        male:   { path: '/static/malemodel.glb',   meshName: 'Object_16', position: [0, 0.2, 2.5] },
+        female: {
+            dosya:        '/static/parkergirl.glb',
+            faceMeshName: 'Object_16',
+            modelPos:     { x: 0,   y: 0.2, z: 2.5 },
+            kaslar: [
+                { index: 42, carpan: 0.8 },
+                { index: 41, carpan: 0.3 },
+                { index: 43, carpan: 0.5 },
+            ],
+        },
+        male: {
+            dosya:        '/static/male_model-v1.glb',
+            faceMeshName: 'CC_Base_Body_1',
+            modelPos:     { x: 0,   y: 0,   z: 0   },
+
+            kaslar: [
+                { isim: 'Mouth_Pucker_Open', carpan: 0.8 },
+                { isim: 'Mouth_Widen_Sides', carpan: 0.4 },
+            ],
+        },
     };
 
     const cfg = MODEL_CONFIG[gender] || MODEL_CONFIG.female;
