@@ -78,8 +78,7 @@ async def chat(req: ChatRequest):
                 "en": f"Welcome back, {req.user_name}! What can I get you today?" if req.user_name not in ("Misafir","Guest","") else "Welcome to Pera Cafe!",
                 "ar": f"مرحباً {req.user_name}! يسعدنا عودتك." if req.user_name not in ("Misafir","","Guest","ضيف") else "مرحباً بكم في بيرا كافيه!",
             }.get(lang, "")
-            return {"reply": greeting_text, "cart": None, "audio_base64": make_audio_b64(greeting_text, lang)}
-
+            return {"reply": greeting_text, "cart": None, "audio_base64": make_audio_b64(greeting_text, lang, req.gender)}
         hist = [
             {"role": "user" if m.role == "user" else "model", "parts": [m.content]}
             for m in req.messages[:-1]
@@ -97,7 +96,7 @@ async def chat(req: ChatRequest):
             except:
                 pass
 
-        audio_b64 = make_audio_b64(clean, lang)
+        audio_b64 = make_audio_b64(clean, lang, req.gender)
         return {"reply": clean, "cart": cart, "audio_base64": audio_b64}
 
     except Exception as e:
