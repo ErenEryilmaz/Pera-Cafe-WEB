@@ -1,6 +1,7 @@
 import io
 import base64
-from gtts import gTTS
+import os
+import requests
 
 
 def build_prompt(lang: str, user_name: str, menu_text: str, gender: str = "female") -> str:
@@ -39,13 +40,49 @@ def build_prompt(lang: str, user_name: str, menu_text: str, gender: str = "femal
     }.get(lang, "")
 
 
-def make_audio_b64(text: str, lang: str = "tr") -> str | None:
+def make_audio_b64(text: str, lang: str = "tr", gender: str = "female") -> str | None:
+    api_key = os.getenv("ELEVENLABS_API_KEY")
+    if not api_key:
+        return None
+
+    # Dil + cinsiyet kombinasyonuna göre voice ID
+    # ElevenLabs Voice Library'den beğendiğin sesleri buraya yaz
+    VOICE_IDS = {
+        "tr": {
+            "female": "pNInz6obpgDQGcFmaJgB",   # Türkçe kadın — değiştir
+            "male":   "EXAVITQu4vr4xnSDxMaL",   # Türkçe erkek — değiştir
+        },
+        "en": {
+            "female": "21m00Tcm4TlvDq8ikWAM",   # Rachel
+            "male":   "onwK4e9ZLuTAKqWW03F9",   # Daniel
+        },
+        "ar": {
+            "female": "XB0fDUnXU5powFXDhCwa",   # Charlotte (multilingual)
+            "male":   "N2lVS1w4EtoT3dr4eOWO",   # Callum (multilingual)
+        },
+    }
+
+    voice_id = VOICE_IDS.get(lang, VOICE_IDS["tr"]).get(gender, "female")
+
     try:
-        tts = gTTS(text=text, lang={"tr": "tr", "en": "en", "ar": "ar"}.get(lang, "tr"))
-        buf = io.BytesIO()
-        tts.write_to_fp(buf)
-        buf.seek(0)
-        return base64.b64encode(buf.read()).decode()
+        response = requests.post(
+            f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
+            headers={
+                "xi-api-key": api_key,
+                "Content-Type": "application/json",
+            },
+            json={
+                "text": text,
+                "model_id": "eleven_multilingual_v2",
+                "voice_settings": {
+                    "stability": 0.5,
+                    "similarity_boost": 0.75,
+                },
+            },
+            timeout=15,
+        )
+        response.raise_for_status()
+        return base64.b64encode(response.content).decode()
     except Exception as e:
-        print(f"TTS: {e}")
+        print(f"ElevenLabs TTS hatası: {e}")
         return None
