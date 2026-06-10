@@ -19,6 +19,7 @@ function getPillText(mode) {
 
 function setPill(mode) {
     voiceMode = mode;
+    window.isPeraSpeaking = (mode === 'speaking');
     document.getElementById('pill-text').textContent = getPillText(mode);
     document.getElementById('pill-dot').className    = 'voice-pill-dot ' + mode;
     const wave = document.getElementById('pill-wave');
