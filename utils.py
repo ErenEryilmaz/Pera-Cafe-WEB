@@ -49,8 +49,8 @@ def make_audio_b64(text: str, lang: str = "tr", gender: str = "female") -> str |
     # ElevenLabs Voice Library'den beğendiğin sesleri buraya yaz
     VOICE_IDS = {
         "tr": {
-            "female": "pNInz6obpgDQGcFmaJgB",   # Türkçe kadın — değiştir
-            "male":   "EXAVITQu4vr4xnSDxMaL",   # Türkçe erkek — değiştir
+            "female": "EXAVITQu4vr4xnSDxMaL",   # Bella — kadın
+            "male":   "pNInz6obpgDQGcFmaJgB",   # Adam  — erkek
         },
         "en": {
             "female": "21m00Tcm4TlvDq8ikWAM",   # Rachel
