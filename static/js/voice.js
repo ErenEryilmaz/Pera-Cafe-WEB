@@ -19,7 +19,6 @@ function getPillText(mode) {
 
 function setPill(mode) {
     voiceMode = mode;
-    window.isPeraSpeaking = (mode === 'speaking');
     document.getElementById('pill-text').textContent = getPillText(mode);
     document.getElementById('pill-dot').className    = 'voice-pill-dot ' + mode;
     const wave = document.getElementById('pill-wave');
@@ -128,6 +127,7 @@ function stopVoiceSystem() {
     srId++;
     killSR();
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    window.isPeraSpeaking = false;
     setPill('off');
     updatePillText();
 }
@@ -137,18 +137,28 @@ function toggleVoiceSystem() { voiceEnabled ? stopVoiceSystem() : startVoiceSyst
 // ── Ses çalma ────────────────────────────────────────────────
 function playAudioAndResume(b64) {
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-    currentAudio = new Audio('data:audio/mp3;base64,' + b64);
+    const audio = new Audio('data:audio/mp3;base64,' + b64);
+    currentAudio = audio;
 
-    currentAudio.onplay = () => {
+    // Ses GERÇEKTEN duyulmaya başlayınca kasları oynat
+    audio.onplaying = () => {
         window.isPeraSpeaking = true;
         setPill('speaking');
     };
-    currentAudio.onended = currentAudio.onerror = () => {
+    // Bitince / hata / pause: kaslar 0'a dönsün
+    const stopSpeaking = () => {
         window.isPeraSpeaking = false;
-        currentAudio = null;
-        resumeListening(400);
+        if (currentAudio === audio) {
+            currentAudio = null;
+            resumeListening(400);
+        }
     };
-    currentAudio.play().catch(() => {
+    audio.onended = audio.onerror = stopSpeaking;
+    audio.onpause = () => {
+        // pause() çağrısı 'ended' ateşlemez — ağız açık kalmasın
+        if (!audio.ended) window.isPeraSpeaking = false;
+    };
+    audio.play().catch(() => {
         window.isPeraSpeaking = false;
         resumeListening(400);
     });

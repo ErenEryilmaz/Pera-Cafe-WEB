@@ -224,8 +224,8 @@
                 });
             } else {
                 activeMuscles.forEach(m => {
-                    faceMesh.morphTargetInfluences[m.index] +=
-                        (0 - faceMesh.morphTargetInfluences[m.index]) * 0.2;
+                    const v = faceMesh.morphTargetInfluences[m.index] * 0.8;
+                    faceMesh.morphTargetInfluences[m.index] = v < 0.001 ? 0 : v;
                 });
             }
         }
