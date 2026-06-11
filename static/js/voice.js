@@ -134,11 +134,52 @@ function stopVoiceSystem() {
 
 function toggleVoiceSystem() { voiceEnabled ? stopVoiceSystem() : startVoiceSystem(); }
 
+// ── Lip-sync: gerçek ses genliği analizi ─────────────────────
+let lipCtx = null, lipAnalyser = null, lipData = null;
+
+function setupLipSync(audio) {
+    try {
+        if (!lipCtx) {
+            lipCtx = new (window.AudioContext || window.webkitAudioContext)();
+            lipAnalyser = lipCtx.createAnalyser();
+            lipAnalyser.fftSize = 256;
+            lipAnalyser.smoothingTimeConstant = 0.5;
+            lipData = new Uint8Array(lipAnalyser.frequencyBinCount);
+            lipAnalyser.connect(lipCtx.destination);
+        }
+        if (lipCtx.state === 'suspended') lipCtx.resume();
+        // Her Audio elementi yalnız bir kez source olabilir
+        const src = lipCtx.createMediaElementSource(audio);
+        src.connect(lipAnalyser);
+        return true;
+    } catch(e) {
+        console.warn('Lip-sync analyser kurulamadı, sinüs moduna düşülüyor:', e);
+        return false;
+    }
+}
+
+// Animasyon döngüsü her frame bunu çağırır: 0..1 arası anlık ses seviyesi.
+// Analyser yoksa null döner (çağıran sinüs fallback kullanır).
+window.getPeraAudioLevel = function() {
+    if (!lipAnalyser || !window.isPeraSpeaking) return null;
+    // Zaman alanında RMS: dalga formunun gerçek anlık genliği
+    lipAnalyser.getByteTimeDomainData(lipData);
+    let sum = 0;
+    for (let i = 0; i < lipData.length; i++) {
+        const d = (lipData[i] - 128) / 128;
+        sum += d * d;
+    }
+    const rms = Math.sqrt(sum / lipData.length);
+    // 0.02 altı = sessizlik (gürültü tabanı); konuşma tipik 0.05-0.3 RMS
+    return Math.min(1, Math.max(0, (rms - 0.02) * 4));
+};
+
 // ── Ses çalma ────────────────────────────────────────────────
 function playAudioAndResume(b64) {
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
     const audio = new Audio('data:audio/mp3;base64,' + b64);
     currentAudio = audio;
+    setupLipSync(audio);
 
     // Ses GERÇEKTEN duyulmaya başlayınca kasları oynat
     audio.onplaying = () => {

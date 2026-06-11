@@ -150,8 +150,7 @@
     directionalLight.position.set(2, 2, 5);
     scene.add(directionalLight);
 
-    let faceMesh = null;
-    let activeMuscles = []; // { index, carpan }
+    let activeMuscles = []; // { mesh, index, carpan }
 
     const gender = localStorage.getItem('peraGender') || 'female';
 
@@ -192,22 +191,29 @@
             model.position.set(cfg.modelPos.x, cfg.modelPos.y, cfg.modelPos.z);
             scene.add(model);
 
+            // Yüz mesh'i birden çok primitive'e bölünmüş olabilir
+            // (örn. CC_Base_Body, CC_Base_Body_1, ...) — hepsini tara,
+            // ilgili morph'u içeren TÜM mesh'lere kas ekle.
+            activeMuscles = [];
             model.traverse((child) => {
-                if (child.isMesh && child.name === cfg.faceMeshName) {
-                    faceMesh = child;
-                    activeMuscles = [];
-                    cfg.kaslar.forEach(k => {
-                        if (k.index !== undefined) {
-                            activeMuscles.push({ index: k.index, carpan: k.carpan });
-                        } else if (k.isim && faceMesh.morphTargetDictionary) {
-                            const idx = faceMesh.morphTargetDictionary[k.isim];
-                            if (idx !== undefined) {
-                                activeMuscles.push({ index: idx, carpan: k.carpan });
-                            }
+                if (!child.isMesh || !child.morphTargetInfluences) return;
+                if (!child.name.startsWith(cfg.faceMeshName.replace(/_\d+$/, '')) &&
+                    child.name !== cfg.faceMeshName) return;
+
+                cfg.kaslar.forEach(k => {
+                    if (k.index !== undefined) {
+                        if (k.index < child.morphTargetInfluences.length) {
+                            activeMuscles.push({ mesh: child, index: k.index, carpan: k.carpan });
                         }
-                    });
-                }
+                    } else if (k.isim && child.morphTargetDictionary) {
+                        const idx = child.morphTargetDictionary[k.isim];
+                        if (idx !== undefined) {
+                            activeMuscles.push({ mesh: child, index: idx, carpan: k.carpan });
+                        }
+                    }
+                });
             });
+            console.log('Lip-sync kasları:', activeMuscles.length);
         },
         undefined,
         function (error) { console.error('Model yükleme hatası:', error); }
@@ -216,16 +222,24 @@
     function animate() {
         requestAnimationFrame(animate);
 
-        if (faceMesh && activeMuscles.length > 0) {
+        if (activeMuscles.length > 0) {
             if (window.isPeraSpeaking) {
-                const aciklik = (Math.sin(Date.now() * 0.015) + 1) / 2;
+                // Gerçek ses genliği — sesle senkron lip-sync
+                let aciklik = window.getPeraAudioLevel ? window.getPeraAudioLevel() : null;
+                if (aciklik === null) {
+                    // Analyser yoksa fallback: sinüs
+                    aciklik = (Math.sin(Date.now() * 0.015) + 1) / 2;
+                }
                 activeMuscles.forEach(m => {
-                    faceMesh.morphTargetInfluences[m.index] = aciklik * m.carpan;
+                    const hedef  = aciklik * m.carpan;
+                    const mevcut = m.mesh.morphTargetInfluences[m.index];
+                    // Yumuşatma: ani sıçrama yerine hedefe hızlı yaklaş
+                    m.mesh.morphTargetInfluences[m.index] = mevcut + (hedef - mevcut) * 0.5;
                 });
             } else {
                 activeMuscles.forEach(m => {
-                    const v = faceMesh.morphTargetInfluences[m.index] * 0.8;
-                    faceMesh.morphTargetInfluences[m.index] = v < 0.001 ? 0 : v;
+                    const v = m.mesh.morphTargetInfluences[m.index] * 0.8;
+                    m.mesh.morphTargetInfluences[m.index] = v < 0.001 ? 0 : v;
                 });
             }
         }
