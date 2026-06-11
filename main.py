@@ -44,7 +44,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+class CachedStaticFiles(StaticFiles):
+    """3D modeller büyük (60MB+) — tarayıcının kesin cache'lemesi için
+    explicit Cache-Control ver. HTML/JS ise hep taze kalsın ki
+    güncellemeler kullanıcıya anında ulaşsın."""
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        if path.endswith((".glb", ".gltf", ".png", ".jpg", ".woff2")):
+            response.headers["Cache-Control"] = "public, max-age=86400"
+        elif path.endswith((".html", ".js", ".css")):
+            response.headers["Cache-Control"] = "no-cache"
+        return response
+
+
+app.mount("/static", CachedStaticFiles(directory="static"), name="static")
 
 app.include_router(customer_router)
 app.include_router(admin_router)

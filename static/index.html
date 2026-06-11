@@ -184,9 +184,8 @@
 
     const loader = new GLTFLoader();
     loader.setDRACOLoader(dracoLoader);
-    loader.load(
-        cfg.dosya,
-        function (gltf) {
+
+    function onModelLoaded(gltf) {
             const model = gltf.scene;
             model.position.set(cfg.modelPos.x, cfg.modelPos.y, cfg.modelPos.z);
             scene.add(model);
@@ -214,10 +213,27 @@
                 });
             });
             console.log('Lip-sync kasları:', activeMuscles.length);
-        },
-        undefined,
-        function (error) { console.error('Model yükleme hatası:', error); }
-    );
+    }
+
+    // Önce login sayfasının doldurduğu Cache Storage'a bak — varsa anında parse,
+    // yoksa normal indir (ve depoya koy ki bir dahaki sefere anında gelsin).
+    (async () => {
+        const onErr = (e) => console.error('Model yükleme hatası:', e);
+        try {
+            const cache = await caches.open('pera-models');
+            let hit = await cache.match(cfg.dosya);
+            if (!hit) {
+                await cache.add(cfg.dosya);
+                hit = await cache.match(cfg.dosya);
+            }
+            const data = await hit.arrayBuffer();
+            console.log('Model Cache Storage\'dan yüklendi:', cfg.dosya);
+            loader.parse(data, '/static/', onModelLoaded, onErr);
+        } catch(e) {
+            console.warn('Cache Storage kullanılamadı, ağdan indiriliyor:', e);
+            loader.load(cfg.dosya, onModelLoaded, undefined, onErr);
+        }
+    })();
 
     function animate() {
         requestAnimationFrame(animate);

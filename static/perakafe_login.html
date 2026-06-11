@@ -490,17 +490,38 @@ function preloadModel(gender) {
   const path = MODEL_PATHS[gender];
   if (!path) return;
   modelReady = false;
-  fetch(path, { priority: 'low' })
-    .then(() => {
-      modelReady = true;
-      modelReadyCallbacks.forEach(cb => cb());
-      modelReadyCallbacks = [];
-    })
-    .catch(() => {
-      modelReady = true;
-      modelReadyCallbacks.forEach(cb => cb());
-      modelReadyCallbacks = [];
-    });
+  const done = () => {
+    modelReady = true;
+    modelReadyCallbacks.forEach(cb => cb());
+    modelReadyCallbacks = [];
+  };
+  // Cache Storage API: HTTP cache 60MB+ dosyaları tutmuyor,
+  // modeli açıkça depoya koy — index.html oradan anında okur.
+  (async () => {
+    try {
+      const cache = await caches.open('pera-models');
+      const hit = await cache.match(path);
+      if (!hit) await cache.add(path);
+    } catch(e) {
+      // Cache API yoksa en azından HTTP cache'i ısıt
+      try { await (await fetch(path, { priority: 'low' })).arrayBuffer(); } catch(_) {}
+    }
+  })().then(done, done);
+}
+
+// Buton "Garson hazırlanıyor"a döner, model inince hedefe gider
+function waitModelThenGo(btnId) {
+  const btn = document.getElementById(btnId);
+  if (modelReady) { window.location.href = 'index.html'; return; }
+  const t = LANG[currentLang];
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Garson hazırlanıyor <span class="loading-dots"><span></span><span></span><span></span></span>';
+  onModelReady(() => {
+    btn.disabled = false;
+    btn.textContent = orig;
+    window.location.href = 'index.html';
+  });
 }
 
 // ══════════════════════════════════════════════════════
@@ -566,25 +587,13 @@ function goBack(t){showScreen(t);}
 function goGuest(){showScreen('s-guest');}
 function goRegister(){showScreen('s-register');}
 function goToCafe(){
-  const btn = document.getElementById('btn-start');
-  if (!modelReady) {
-    const t = LANG[currentLang];
-    btn.disabled = true;
-    btn.innerHTML = '⏳ Garson hazırlanıyor <span class="loading-dots"><span></span><span></span><span></span></span>';
-    onModelReady(() => {
-      btn.disabled = false;
-      btn.textContent = t.btnStart;
-      window.location.href = 'index.html';
-    });
-  } else {
-    window.location.href = 'index.html';
-  }
+  waitModelThenGo('btn-start');
 }
 function logout(){localStorage.removeItem('userName');window.location.reload();}
 
 function guestLogin(){
   localStorage.setItem('userName','Misafir');
-  window.location.href='index.html';
+  waitModelThenGo('btn-guest-start');
 }
 
 // ══════════════════════════════════════════════════════
