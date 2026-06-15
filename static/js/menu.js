@@ -1,7 +1,7 @@
 // ── Menü ──────────────────────────────────────────────────────
 async function fetchMenu() {
     try {
-        const r = await fetch(window.location.origin + '/menu');
+        const r = await fetch(window.location.origin + '/menu?lang=' + currentLang);
         const d = await r.json();
         renderMenu(d.menu);
     } catch(e) {

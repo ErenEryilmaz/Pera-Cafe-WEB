@@ -49,15 +49,15 @@ async def register(req: RegisterRequest):
 
 
 @router.get("/menu")
-async def menu():
-    m, _ = get_menu_data()
+async def menu(lang: str = "tr"):
+    m, _ = get_menu_data(lang)
     return {"menu": m}
 
 
 @router.post("/chat")
 async def chat(req: ChatRequest):
-    _, menu_text = get_menu_data()
     lang = req.lang if req.lang in ("tr", "en", "ar") else "tr"
+    _, menu_text = get_menu_data(lang)
     try:
         genai.configure(api_key=MY_API_KEY)
         try:

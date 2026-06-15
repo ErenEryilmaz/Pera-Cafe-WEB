@@ -23,7 +23,11 @@ def get_db():
     )
 
 
-def get_menu_data():
+def get_menu_data(lang="tr"):
+    # Hangi sütundan okunacağını belirle (varsayılan: Türkçe)
+    lang = lang if lang in ("tr", "en", "ar") else "tr"
+    cat_col = "CategoryName" if lang == "tr" else f"CategoryName_{lang}"
+    prod_col = "ProductName" if lang == "tr" else f"ProductName_{lang}"
     try:
         db = get_db()
         cur = db.cursor(dictionary=True)
@@ -36,13 +40,16 @@ def get_menu_data():
         menu_dict = {}
         ai_text = "GÜNCEL FİYAT LİSTESİ:\n"
         for row in rows:
-            cat = row["CategoryName"]
-            urun = row["ProductName"]
+            # Çeviri sütunu yoksa (eski şema) Türkçeye düş
+            cat = row.get(cat_col) or row["CategoryName"]
+            urun = row.get(prod_col) or row["ProductName"]
             fiyat = float(row["BasePrice"])
             cold = row["IsCold"]
             if cat not in menu_dict:
                 menu_dict[cat] = []
-            s = "🧊 Soğuk" if cold else "☕ Sıcak"
+            cold_label = {"tr": "Soğuk", "en": "Cold", "ar": "بارد"}[lang]
+            hot_label = {"tr": "Sıcak", "en": "Hot", "ar": "ساخن"}[lang]
+            s = f"🧊 {cold_label}" if cold else f"☕ {hot_label}"
             menu_dict[cat].append({
                 "urun": urun,
                 "fiyat_gorunum": f"Fiyat: {fiyat}₺ | {s}",
