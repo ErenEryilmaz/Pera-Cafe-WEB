@@ -62,3 +62,25 @@ class CategoryCreateReq(BaseModel):
 
 class OrderStatusReq(BaseModel):
     status: str   # pending | preparing | ready | completed | cancelled
+
+
+class CampaignCreateReq(BaseModel):
+    title: str
+    type: str                      # buy_x_get_y | percentage | fixed
+    config: dict                   # {"buy":2,"get":1} | {"percent":10} | {"amount":20}
+    description: Optional[str] = None
+    badge_color: str = "#E67E22"
+    is_active: bool = True
+    start_date: Optional[str] = None   # "YYYY-MM-DD"
+    end_date: Optional[str] = None
+
+
+class CampaignUpdateReq(BaseModel):
+    title: Optional[str] = None
+    type: Optional[str] = None
+    config: Optional[dict] = None
+    description: Optional[str] = None
+    badge_color: Optional[str] = None
+    is_active: Optional[bool] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None

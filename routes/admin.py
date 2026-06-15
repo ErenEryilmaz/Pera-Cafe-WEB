@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, HTTPException, Depends
 
 from auth import verify_token, create_admin_token, revoke_token, TOKEN_TTL
@@ -5,9 +7,34 @@ from database import get_db
 from models import (
     AdminLoginReq, ProductUpdateReq, ProductCreateReq,
     CategoryCreateReq, OrderStatusReq,
+    CampaignCreateReq, CampaignUpdateReq,
 )
 
 router = APIRouter(prefix="/admin")
+
+
+def _format_campaign(row: dict) -> dict:
+    """DB satırını frontend'in beklediği biçime çevir:
+    config -> dict, tarihler -> 'YYYY-MM-DD' string/None, is_active -> bool."""
+    cfg = row.get("config")
+    if isinstance(cfg, (bytes, bytearray)):
+        cfg = cfg.decode("utf-8")
+    if isinstance(cfg, str):
+        try:
+            cfg = json.loads(cfg)
+        except Exception:
+            cfg = {}
+    return {
+        "id":          row["id"],
+        "title":       row["title"],
+        "description": row.get("description"),
+        "type":        row["type"],
+        "config":      cfg or {},
+        "badge_color": row.get("badge_color") or "#E67E22",
+        "is_active":   bool(row.get("is_active")),
+        "start_date":  str(row["start_date"]) if row.get("start_date") else None,
+        "end_date":    str(row["end_date"]) if row.get("end_date") else None,
+    }
 
 
 # ── Auth ─────────────────────────────────────────────────────
@@ -280,5 +307,88 @@ async def get_members(_: str = Depends(verify_token)):
             r["total_spent"] = float(r["total_spent"])
         db.close()
         return rows
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+# ── Kampanyalar ──────────────────────────────────────────────
+
+VALID_CAMP_TYPES = ("buy_x_get_y", "percentage", "fixed")
+
+
+@router.get("/campaigns")
+async def get_campaigns(_: str = Depends(verify_token)):
+    try:
+        db = get_db()
+        cur = db.cursor(dictionary=True)
+        cur.execute("SELECT * FROM campaigns ORDER BY created_at DESC")
+        rows = cur.fetchall()
+        db.close()
+        return [_format_campaign(r) for r in rows]
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@router.post("/campaigns")
+async def add_campaign(req: CampaignCreateReq, _: str = Depends(verify_token)):
+    if req.type not in VALID_CAMP_TYPES:
+        raise HTTPException(400, f"Geçersiz tip. Geçerli değerler: {VALID_CAMP_TYPES}")
+    try:
+        db = get_db()
+        cur = db.cursor()
+        cur.execute(
+            """INSERT INTO campaigns
+               (title, description, type, config, badge_color, is_active, start_date, end_date)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+            (
+                req.title, req.description, req.type, json.dumps(req.config),
+                req.badge_color, req.is_active,
+                req.start_date or None, req.end_date or None,
+            ),
+        )
+        db.commit()
+        new_id = cur.lastrowid
+        db.close()
+        return {"success": True, "campaign_id": new_id}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@router.patch("/campaigns/{campaign_id}")
+async def update_campaign(campaign_id: int, req: CampaignUpdateReq, _: str = Depends(verify_token)):
+    if req.type is not None and req.type not in VALID_CAMP_TYPES:
+        raise HTTPException(400, f"Geçersiz tip. Geçerli değerler: {VALID_CAMP_TYPES}")
+    fields, vals = [], []
+    if req.title       is not None: fields.append("title=%s");       vals.append(req.title)
+    if req.description is not None: fields.append("description=%s"); vals.append(req.description)
+    if req.type        is not None: fields.append("type=%s");        vals.append(req.type)
+    if req.config      is not None: fields.append("config=%s");      vals.append(json.dumps(req.config))
+    if req.badge_color is not None: fields.append("badge_color=%s"); vals.append(req.badge_color)
+    if req.is_active   is not None: fields.append("is_active=%s");   vals.append(req.is_active)
+    if req.start_date  is not None: fields.append("start_date=%s");  vals.append(req.start_date or None)
+    if req.end_date    is not None: fields.append("end_date=%s");    vals.append(req.end_date or None)
+    if not fields:
+        return {"success": True, "message": "Değişiklik yok."}
+    vals.append(campaign_id)
+    try:
+        db = get_db()
+        cur = db.cursor()
+        cur.execute(f"UPDATE campaigns SET {', '.join(fields)} WHERE id=%s", vals)
+        db.commit()
+        db.close()
+        return {"success": True}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@router.delete("/campaigns/{campaign_id}")
+async def delete_campaign(campaign_id: int, _: str = Depends(verify_token)):
+    try:
+        db = get_db()
+        cur = db.cursor()
+        cur.execute("DELETE FROM campaigns WHERE id=%s", (campaign_id,))
+        db.commit()
+        db.close()
+        return {"success": True}
     except Exception as e:
         raise HTTPException(500, str(e))

@@ -54,6 +54,47 @@ async def menu(lang: str = "tr"):
     return {"menu": m}
 
 
+@router.get("/campaigns")
+async def campaigns():
+    """Müşteriye yalnızca aktif ve tarihi geçerli kampanyaları döndürür."""
+    try:
+        db = get_db()
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            """SELECT * FROM campaigns
+               WHERE is_active = TRUE
+                 AND (start_date IS NULL OR start_date <= CURDATE())
+                 AND (end_date   IS NULL OR end_date   >= CURDATE())
+               ORDER BY created_at DESC"""
+        )
+        rows = cur.fetchall()
+        db.close()
+    except Exception:
+        return []
+
+    result = []
+    for row in rows:
+        cfg = row.get("config")
+        if isinstance(cfg, (bytes, bytearray)):
+            cfg = cfg.decode("utf-8")
+        if isinstance(cfg, str):
+            try:
+                cfg = json.loads(cfg)
+            except Exception:
+                cfg = {}
+        result.append({
+            "id":          row["id"],
+            "title":       row["title"],
+            "description": row.get("description"),
+            "type":        row["type"],
+            "config":      cfg or {},
+            "badge_color": row.get("badge_color") or "#E67E22",
+            "start_date":  str(row["start_date"]) if row.get("start_date") else None,
+            "end_date":    str(row["end_date"]) if row.get("end_date") else None,
+        })
+    return result
+
+
 @router.post("/chat")
 async def chat(req: ChatRequest):
     lang = req.lang if req.lang in ("tr", "en", "ar") else "tr"
