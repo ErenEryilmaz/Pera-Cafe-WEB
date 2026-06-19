@@ -161,9 +161,11 @@
             dosya:        '/static/female.glb',
             faceMeshName: 'Head_Mesh',
             modelPos:     { x: 0,   y: -0.15, z: 2.6 },
-            // Avaturn modeli (erkeklerle aynı rig) — ~7.5° hafif açılı duruş ve
-            // T-pozunu önlemek için idle animasyonu oynat.
-            modelRotY:    0.424,
+            // Avaturn modeli. Bu modelin idle'ı statik ve kafası kalçadan
+            // ayrı ~+5° dönük; kafanın tam karşıya bakması için ekstra dönüş
+            // gerekmiyor (rotY = 0). (Erkek modelden farklı: onun kalçası
+            // ~-32° dönük olduğu için orada büyük telafi gerekiyordu.)
+            modelRotY:    0.0,
             oynatAnim:    true,
             kaslar: [
                 { isim: 'jawOpen',   carpan: 0.7 },
@@ -175,9 +177,9 @@
             faceMeshName: 'Head_Mesh',
             modelPos:     { x: 0,   y: -0.15, z: 2.6 },
             // Avaturn idle animasyonu kalçayı ~32° (-0.555 rad) yana çeviriyor.
-            // Tam telafi (0.555) dümdüz/vesikalık duruyordu; 0.424 ile çok
-            // hafif açılı (~7.5°) bir duruş bırakıyoruz.
-            modelRotY:    0.424,
+            // Tam telafi (0.555) dümdüz/vesikalık duruyordu; 0.503 ile çok
+            // hafif açılı (~3°) bir duruş bırakıyoruz.
+            modelRotY:    0.503,
             // Avaturn modelleri T-pozunda export ediliyor; doğal duruş
             // animasyonun içinde — onu oynat ki kollar düzgün dursun.
             oynatAnim:    true,
