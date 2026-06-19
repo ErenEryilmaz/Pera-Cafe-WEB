@@ -419,6 +419,10 @@ function apiFetch(path, opts={}) {
 
 function initPanel() {
   if (token) document.getElementById('login-screen').style.display = 'none';
+  // FIX: token yokken giriş ekranı için #main/#sidebar opaklığı 0.3'e düşürülüyordu
+  // ama giriş sonrası geri alınmıyordu — panel "koyu kalıyordu". Burada sıfırlıyoruz.
+  document.getElementById('main').style.opacity = '1';
+  document.getElementById('sidebar').style.opacity = '1';
   loadCategories();
   showPage('dashboard');
   startAutoRefresh();
@@ -850,7 +854,7 @@ async function loadMembers() {
 function filterMembers() {
   const q = document.getElementById('member-search')?.value.toLowerCase() || '';
   renderMembers((window._members||[]).filter(m=>
-    m.phone.includes(q) || (m.first_name+' '+m.last_name).toLowerCase().includes(q)
+    (m.phone||'').includes(q) || ((m.first_name||'')+' '+(m.last_name||'')).toLowerCase().includes(q)
   ));
 }
 
@@ -859,13 +863,19 @@ function renderMembers(members) {
   if (!members.length) { tbody.innerHTML='<div style="padding:20px;color:var(--text2);text-align:center">Üye bulunamadı.</div>'; return; }
   tbody.innerHTML = `<table>
     <thead><tr><th>Ad Soyad</th><th>Telefon</th><th>Sipariş Sayısı</th><th>Toplam Harcama</th><th>Kayıt Tarihi</th></tr></thead>
-    <tbody>${members.map(m=>`<tr>
-      <td><strong>${m.first_name} ${m.last_name}</strong></td>
-      <td style="font-family:monospace">${m.phone}</td>
-      <td>${m.order_count}</td>
-      <td>${m.total_spent.toFixed(2)} ₺</td>
-      <td style="font-size:12px;color:var(--text2)">${new Date(m.created_at).toLocaleDateString('tr-TR')}</td>
-    </tr>`).join('')}</tbody></table>`;
+    <tbody>${members.map(m=>{
+      // FIX: alanlar null/eksik gelirse satır render'ı çökmesin diye güvenli erişim
+      const name    = `${m.first_name||''} ${m.last_name||''}`.trim() || '—';
+      const spent   = (Number(m.total_spent)||0).toFixed(2);
+      const created = m.created_at ? new Date(m.created_at).toLocaleDateString('tr-TR') : '—';
+      return `<tr>
+        <td><strong>${name}</strong></td>
+        <td style="font-family:monospace">${m.phone||'—'}</td>
+        <td>${m.order_count||0}</td>
+        <td>${spent} ₺</td>
+        <td style="font-size:12px;color:var(--text2)">${created}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
 }
 
 // ── YARDIMCI ──────────────────────────────────────────────────

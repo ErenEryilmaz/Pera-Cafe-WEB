@@ -292,20 +292,29 @@ async def get_members(_: str = Depends(verify_token)):
     try:
         db = get_db()
         cur = db.cursor(dictionary=True)
+        # GROUP BY kullanmıyoruz: ONLY_FULL_GROUP_BY modunda (DigitalOcean MySQL'de
+        # varsayılan açık) gruplanmamış sütunlar hata veriyordu. Korelasyonlu alt
+        # sorgular hem bundan kaçınır hem de iptal edilen siparişleri hariç tutar.
+        # SELECT m.* sayesinde tablo şemasındaki (id/created_at) farklılıklara dayanıklı.
         cur.execute("""
-            SELECT m.id, m.phone, m.first_name, m.last_name, m.created_at,
-                   COUNT(o.OrderID) AS order_count,
-                   COALESCE(SUM(o.TotalAmount),0) AS total_spent
+            SELECT m.*,
+                   (SELECT COUNT(*) FROM Orders o
+                      WHERE o.MemberPhone = m.phone AND o.Status <> 'cancelled') AS order_count,
+                   (SELECT COALESCE(SUM(o.TotalAmount), 0) FROM Orders o
+                      WHERE o.MemberPhone = m.phone AND o.Status <> 'cancelled') AS total_spent
             FROM members m
-            LEFT JOIN Orders o ON o.MemberPhone = m.phone
-            GROUP BY m.id
-            ORDER BY m.created_at DESC
         """)
         rows = cur.fetchall()
         for r in rows:
-            r["created_at"]  = str(r["created_at"])
-            r["total_spent"] = float(r["total_spent"])
+            # created_at sütunu eski tablolarda olmayabilir → güvenli dönüştür
+            r["created_at"]  = str(r["created_at"]) if r.get("created_at") else None
+            r["total_spent"] = float(r["total_spent"]) if r.get("total_spent") is not None else 0.0
+            r["order_count"] = int(r.get("order_count") or 0)
+            r.setdefault("first_name", "")
+            r.setdefault("last_name", "")
         db.close()
+        # En yeni üye üstte (created_at varsa); yoksa mevcut sırayı korur
+        rows.sort(key=lambda x: x.get("created_at") or "", reverse=True)
         return rows
     except Exception as e:
         raise HTTPException(500, str(e))
