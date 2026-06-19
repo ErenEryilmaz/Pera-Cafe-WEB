@@ -151,6 +151,8 @@
     scene.add(directionalLight);
 
     let activeMuscles = []; // { mesh, index, carpan }
+    let mixer = null;
+    const clock = new THREE.Clock();
 
     const gender = localStorage.getItem('peraGender') || 'female';
 
@@ -166,13 +168,16 @@
             ],
         },
         male: {
-            dosya:        '/static/male_model.glb',
-            faceMeshName: 'CC_Base_Body_1',
+            dosya:        '/static/erren.glb',
+            faceMeshName: 'Head_Mesh',
             modelPos:     { x: 0,   y: -0.1, z: 2.6 },
+            // Avaturn modelleri T-pozunda export ediliyor; doğal duruş
+            // animasyonun içinde — onu oynat ki kollar düzgün dursun.
+            oynatAnim:    true,
 
             kaslar: [
-                { isim: 'Mouth_Pucker_Open', carpan: 0.8 },
-                { isim: 'Mouth_Widen_Sides', carpan: 0.4 },
+                { isim: 'jawOpen',   carpan: 0.7 },
+                { isim: 'mouthOpen', carpan: 0.4 },
             ],
         },
     };
@@ -189,6 +194,14 @@
             const model = gltf.scene;
             model.position.set(cfg.modelPos.x, cfg.modelPos.y, cfg.modelPos.z);
             scene.add(model);
+
+            // Avaturn gibi T-pozunda gelen modeller için doğal duruş
+            // animasyonunu oynat.
+            mixer = null;
+            if (cfg.oynatAnim && gltf.animations && gltf.animations.length) {
+                mixer = new THREE.AnimationMixer(model);
+                mixer.clipAction(gltf.animations[0]).play();
+            }
 
             // Yüz mesh'i birden çok primitive'e bölünmüş olabilir
             // (örn. CC_Base_Body, CC_Base_Body_1, ...) — hepsini tara,
@@ -237,6 +250,8 @@
 
     function animate() {
         requestAnimationFrame(animate);
+
+        if (mixer) mixer.update(clock.getDelta());
 
         if (activeMuscles.length > 0) {
             if (window.isPeraSpeaking) {
