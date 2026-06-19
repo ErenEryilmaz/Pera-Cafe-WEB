@@ -158,22 +158,26 @@
 
     const MODEL_CONFIG = {
         female: {
-            dosya:        '/static/parkergirl.glb',
-            faceMeshName: 'Object_16',
-            modelPos:     { x: 0,   y: 0.2, z: 2.5 },
+            dosya:        '/static/female.glb',
+            faceMeshName: 'Head_Mesh',
+            modelPos:     { x: 0,   y: -0.15, z: 2.6 },
+            // Avaturn modeli (erkeklerle aynı rig) — ~7.5° hafif açılı duruş ve
+            // T-pozunu önlemek için idle animasyonu oynat.
+            modelRotY:    0.424,
+            oynatAnim:    true,
             kaslar: [
-                { index: 42, carpan: 0.8 },
-                { index: 41, carpan: 0.3 },
-                { index: 43, carpan: 0.5 },
+                { isim: 'jawOpen',   carpan: 0.7 },
+                { isim: 'mouthOpen', carpan: 0.4 },
             ],
         },
         male: {
             dosya:        '/static/eren3.glb',
             faceMeshName: 'Head_Mesh',
             modelPos:     { x: 0,   y: -0.15, z: 2.6 },
-            // Avaturn idle animasyonu kalçayı ~32° yana çeviriyor;
-            // modeli +0.555 rad döndürüp karşıya baktırıyoruz.
-            modelRotY:    0.555,
+            // Avaturn idle animasyonu kalçayı ~32° (-0.555 rad) yana çeviriyor.
+            // Tam telafi (0.555) dümdüz/vesikalık duruyordu; 0.424 ile çok
+            // hafif açılı (~7.5°) bir duruş bırakıyoruz.
+            modelRotY:    0.424,
             // Avaturn modelleri T-pozunda export ediliyor; doğal duruş
             // animasyonun içinde — onu oynat ki kollar düzgün dursun.
             oynatAnim:    true,
