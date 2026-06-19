@@ -168,9 +168,12 @@
             ],
         },
         male: {
-            dosya:        '/static/erren.glb',
+            dosya:        '/static/eren2.glb',
             faceMeshName: 'Head_Mesh',
-            modelPos:     { x: 0,   y: -0.1, z: 2.6 },
+            modelPos:     { x: 0,   y: -0.15, z: 2.6 },
+            // Avaturn idle animasyonu kalçayı ~32° yana çeviriyor;
+            // modeli +0.555 rad döndürüp karşıya baktırıyoruz.
+            modelRotY:    0.555,
             // Avaturn modelleri T-pozunda export ediliyor; doğal duruş
             // animasyonun içinde — onu oynat ki kollar düzgün dursun.
             oynatAnim:    true,
@@ -193,6 +196,7 @@
     function onModelLoaded(gltf) {
             const model = gltf.scene;
             model.position.set(cfg.modelPos.x, cfg.modelPos.y, cfg.modelPos.z);
+            if (cfg.modelRotY !== undefined) model.rotation.y = cfg.modelRotY;
             scene.add(model);
 
             // Avaturn gibi T-pozunda gelen modeller için doğal duruş
@@ -203,18 +207,21 @@
                 mixer.clipAction(gltf.animations[0]).play();
             }
 
-            // Yüz mesh'i birden çok primitive'e bölünmüş olabilir
-            // (örn. CC_Base_Body, CC_Base_Body_1, ...) — hepsini tara,
-            // ilgili morph'u içeren TÜM mesh'lere kas ekle.
+            // Kasları topla. İki mod var:
+            //  • index tabanlı kas  → yalnızca tanımlı yüz mesh'ine uygulanır
+            //    (yüz birden çok primitive'e bölünmüş olabilir: _1, _2 ...).
+            //  • isim tabanlı kas   → o morph'a sahip TÜM mesh'lere uygulanır,
+            //    böylece çene açılınca Head_Mesh ile birlikte Teeth_Mesh ve
+            //    Tongue_Mesh de oynar (alt dişler/dil sabit kalmaz).
             activeMuscles = [];
+            const faceBase = cfg.faceMeshName.replace(/_\d+$/, '');
             model.traverse((child) => {
                 if (!child.isMesh || !child.morphTargetInfluences) return;
-                if (!child.name.startsWith(cfg.faceMeshName.replace(/_\d+$/, '')) &&
-                    child.name !== cfg.faceMeshName) return;
+                const yuzMesh = child.name.startsWith(faceBase) || child.name === cfg.faceMeshName;
 
                 cfg.kaslar.forEach(k => {
                     if (k.index !== undefined) {
-                        if (k.index < child.morphTargetInfluences.length) {
+                        if (yuzMesh && k.index < child.morphTargetInfluences.length) {
                             activeMuscles.push({ mesh: child, index: k.index, carpan: k.carpan });
                         }
                     } else if (k.isim && child.morphTargetDictionary) {
