@@ -320,6 +320,86 @@ async def get_members(_: str = Depends(verify_token)):
         raise HTTPException(500, str(e))
 
 
+# ── Raporlar ─────────────────────────────────────────────────
+# Not: İptal edilen siparişler tüm raporların dışında tutulur (Status <> 'cancelled'),
+# bu da üyeler endpoint'indeki ciro mantığıyla tutarlı.
+
+@router.get("/reports/top-products")
+async def report_top_products(limit: int = 8, _: str = Depends(verify_token)):
+    """En çok satan ürünler — satılan adet ve ciroya göre."""
+    try:
+        db = get_db()
+        cur = db.cursor(dictionary=True)
+        cur.execute("""
+            SELECT oi.ProductName,
+                   SUM(oi.Quantity)                AS total_qty,
+                   SUM(oi.Quantity * oi.UnitPrice) AS total_revenue
+            FROM OrderItems oi
+            JOIN Orders o ON oi.OrderID = o.OrderID
+            WHERE o.Status <> 'cancelled'
+            GROUP BY oi.ProductName
+            ORDER BY total_qty DESC
+            LIMIT %s
+        """, (limit,))
+        rows = cur.fetchall()
+        db.close()
+        for r in rows:
+            r["total_qty"]     = int(r["total_qty"] or 0)
+            r["total_revenue"] = float(r["total_revenue"] or 0)
+        return rows
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@router.get("/reports/categories")
+async def report_categories(_: str = Depends(verify_token)):
+    """Kategori bazlı ciro. OrderItems şemada ProductID tutmadığı için
+    ürün adıyla products'a bağlanır; adı eşleşmeyen kalemler kapsam dışı kalır."""
+    try:
+        db = get_db()
+        cur = db.cursor(dictionary=True)
+        cur.execute("""
+            SELECT c.CategoryName,
+                   SUM(oi.Quantity * oi.UnitPrice) AS total_revenue
+            FROM OrderItems oi
+            JOIN Orders     o ON oi.OrderID = o.OrderID
+            JOIN products   p ON oi.ProductName = p.ProductName
+            JOIN categories c ON p.CategoryID = c.CategoryID
+            WHERE o.Status <> 'cancelled'
+            GROUP BY c.CategoryID, c.CategoryName
+            ORDER BY total_revenue DESC
+        """)
+        rows = cur.fetchall()
+        db.close()
+        for r in rows:
+            r["total_revenue"] = float(r["total_revenue"] or 0)
+        return rows
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@router.get("/reports/hourly")
+async def report_hourly(_: str = Depends(verify_token)):
+    """Son 30 günde saat bazlı sipariş yoğunluğu. Sipariş olmayan saatler de
+    0 ile döner ki frontend'deki 24 saatlik grafikte boşluk kalmasın."""
+    try:
+        db = get_db()
+        cur = db.cursor(dictionary=True)
+        cur.execute("""
+            SELECT HOUR(o.CreatedAt) AS hour, COUNT(*) AS order_count
+            FROM Orders o
+            WHERE o.Status <> 'cancelled'
+              AND o.CreatedAt >= NOW() - INTERVAL 30 DAY
+            GROUP BY HOUR(o.CreatedAt)
+        """)
+        rows = cur.fetchall()
+        db.close()
+        counts = {int(r["hour"]): int(r["order_count"]) for r in rows}
+        return [{"hour": h, "order_count": counts.get(h, 0)} for h in range(24)]
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
 # ── Kampanyalar ──────────────────────────────────────────────
 
 VALID_CAMP_TYPES = ("buy_x_get_y", "percentage", "fixed")
