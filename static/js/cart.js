@@ -11,15 +11,18 @@ function mergeCart(aiCart) {
         if (!item.ad) return;
         const fiyat = parseFloat(item.fiyat) || 0;
 
+        // product_id sunucuda /chat'te atanır; kampanya kapsamı ID ile eşleşsin diye taşı
+        const pid = item.product_id != null ? item.product_id : null;
+
         // Eğer AI qty gönderdiyse onu kullan, yoksa tekrar sayım yöntemi
         if (item.qty !== undefined) {
             const qty = parseInt(item.qty) || 0;
             if (qty <= 0) return; // qty=0 → ürün çıkarılmış, ekleme
-            if (!grouped[key]) grouped[key] = { ad: item.ad, fiyat, qty: 0 };
+            if (!grouped[key]) grouped[key] = { ad: item.ad, fiyat, qty: 0, product_id: pid };
             grouped[key].qty += qty;
         } else {
             // Eski format: aynı ürün birden fazla satırda tekrar eder
-            if (!grouped[key]) grouped[key] = { ad: item.ad, fiyat, qty: 0 };
+            if (!grouped[key]) grouped[key] = { ad: item.ad, fiyat, qty: 0, product_id: pid };
             grouped[key].qty++;
         }
     });
@@ -40,13 +43,16 @@ function clearCart() { cart = []; renderCart(); }
 // ── İndirim hesabı ────────────────────────────────────────────
 // Kampanyanın kapsamına (scope) giren sepet kalemlerini döndürür.
 //   scope_type 'all' / tanımsız  → tüm sepet
-//   scope_type 'category'/'product' → scope_products (ürün adları) ile eşleşenler
+//   scope_type 'category'/'product' → önce ürün ID'siyle (scope_product_ids),
+//                                      ID yoksa adla (scope_products) eşleşenler
 function campaignScopeItems(cartItems, camp) {
     if (!camp.scope_type || camp.scope_type === 'all') return cartItems;
-    const names = camp.scope_products;
-    if (!names || !names.length) return [];   // kapsam var ama hedef ürün yok → uygulanmaz
-    const set = new Set(names);
-    return cartItems.filter(i => set.has(i.ad));
+    const idset   = new Set(camp.scope_product_ids || []);
+    const nameset = new Set(camp.scope_products || []);
+    return cartItems.filter(i => {
+        if (i.product_id != null) return idset.has(i.product_id);
+        return nameset.has(i.ad);   // yedek: ürün ID'si atanmamışsa ada düş
+    });
 }
 
 function applyDiscounts(cartItems, campaigns) {
@@ -157,7 +163,7 @@ async function placeOrder(finalTotal) {
     if (!cart.length) return;
 
     const memberPhone = localStorage.getItem('userPhone') || null;
-    const items = cart.map(i => ({ name: i.ad, qty: i.qty, price: i.fiyat }));
+    const items = cart.map(i => ({ name: i.ad, qty: i.qty, price: i.fiyat, product_id: i.product_id != null ? i.product_id : null }));
 
     try {
         const r = await fetch(window.location.origin + '/order', {

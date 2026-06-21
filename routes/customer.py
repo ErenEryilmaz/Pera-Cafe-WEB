@@ -65,38 +65,58 @@ def _parse_json(val):
     return val
 
 
+def _norm(s):
+    """Ad eşleştirmesi için normalleştirme: kırp, küçült, boşlukları sadeleştir."""
+    return re.sub(r"\s+", " ", str(s or "").strip().casefold())
+
+
+def _product_index(cur):
+    """Tüm dillerdeki normalleştirilmiş ürün adı -> ProductID haritası.
+    AI sepetindeki adları kanonik ürün ID'sine bağlamak için kullanılır."""
+    cur.execute("SELECT ProductID, ProductName, ProductName_en, ProductName_ar FROM products")
+    idx = {}
+    for r in cur.fetchall():
+        for k in ("ProductName", "ProductName_en", "ProductName_ar"):
+            v = r.get(k)
+            if v:
+                idx[_norm(v)] = r["ProductID"]
+    return idx
+
+
 def _resolve_scope(cur, scope_type, scope_ids, lang="tr"):
-    """Kampanya kapsamını çözer. İki liste döner:
-      - match:  eşleştirme için ÜÇ DİLDEKİ tüm ürün adları (TR+EN+AR). Sepet hangi
-                dilde olursa olsun bu set ile eşleşir → dilden bağımsız kapsam.
+    """Kampanya kapsamını çözer. Üç şey döner:
+      - ids:    kapsamdaki ürün ID listesi (BİRİNCİL eşleştirme anahtarı).
+      - names:  üç dildeki tüm ürün adları (product_id yoksa yedek eşleştirme).
       - labels: gösterim için yalnızca istenen dildeki adlar.
-    'all' / kapsamsız -> (None, None)."""
+    'all' / kapsamsız -> (None, None, None)."""
     if scope_type not in ("category", "product") or not scope_ids:
-        return None, None
+        return None, None, None
     col = "CategoryID" if scope_type == "category" else "ProductID"
     placeholders = ",".join(["%s"] * len(scope_ids))
     cur.execute(
-        f"SELECT ProductName, ProductName_en, ProductName_ar "
+        f"SELECT ProductID, ProductName, ProductName_en, ProductName_ar "
         f"FROM products WHERE {col} IN ({placeholders})",
         tuple(scope_ids),
     )
     rows = cur.fetchall()
     label_col = {"en": "ProductName_en", "ar": "ProductName_ar"}.get(lang, "ProductName")
-    match, labels = [], []
+    ids, names, labels = [], [], []
     for r in rows:
+        ids.append(r["ProductID"])
         for k in ("ProductName", "ProductName_en", "ProductName_ar"):
             if r.get(k):
-                match.append(r[k])
+                names.append(r[k])
         labels.append(r.get(label_col) or r["ProductName"])
     # Sırayı koruyarak tekrarsızlaştır
-    return list(dict.fromkeys(match)), list(dict.fromkeys(labels))
+    return list(dict.fromkeys(ids)), list(dict.fromkeys(names)), list(dict.fromkeys(labels))
 
 
 def _fetch_active_campaigns(cur, lang="tr"):
     """Aktif ve tarihi geçerli kampanyaları kapsam çözülmüş biçimde döndürür.
     Dictionary cursor bekler. /campaigns ve /order ortak kullanır.
-      - scope_products: eşleştirme seti (tüm diller) — indirim hesabı bunu kullanır.
-      - scope_labels:   gösterim için istenen dildeki adlar."""
+      - scope_product_ids: kapsamdaki ürün ID'leri — indirim BU ID'lerle eşleşir.
+      - scope_products:    üç dildeki adlar — yedek (product_id yoksa) eşleştirme.
+      - scope_labels:      gösterim için istenen dildeki adlar."""
     cur.execute(
         """SELECT * FROM campaigns
            WHERE is_active = TRUE
@@ -109,19 +129,20 @@ def _fetch_active_campaigns(cur, lang="tr"):
     for row in rows:
         scope_type = row.get("scope_type") or "all"
         scope_ids = _parse_json(row.get("scope_ids")) or []
-        match, labels = _resolve_scope(cur, scope_type, scope_ids, lang)
+        ids, names, labels = _resolve_scope(cur, scope_type, scope_ids, lang)
         result.append({
-            "id":             row["id"],
-            "title":          row["title"],
-            "description":    row.get("description"),
-            "type":           row["type"],
-            "config":         _parse_json(row.get("config")) or {},
-            "badge_color":    row.get("badge_color") or "#E67E22",
-            "start_date":     str(row["start_date"]) if row.get("start_date") else None,
-            "end_date":       str(row["end_date"]) if row.get("end_date") else None,
-            "scope_type":     scope_type,
-            "scope_products": match,
-            "scope_labels":   labels,
+            "id":               row["id"],
+            "title":            row["title"],
+            "description":      row.get("description"),
+            "type":             row["type"],
+            "config":           _parse_json(row.get("config")) or {},
+            "badge_color":      row.get("badge_color") or "#E67E22",
+            "start_date":       str(row["start_date"]) if row.get("start_date") else None,
+            "end_date":         str(row["end_date"]) if row.get("end_date") else None,
+            "scope_type":       scope_type,
+            "scope_product_ids": ids,
+            "scope_products":   names,
+            "scope_labels":     labels,
         })
     return result
 
@@ -130,14 +151,21 @@ def _fetch_active_campaigns(cur, lang="tr"):
 # Sipariş toplamı sunucuda yeniden hesaplanır; client gönderdiği tutara güvenilmez.
 
 def _scope_items(items, camp):
-    """Kampanya kapsamına giren sipariş kalemleri. items: [{name, qty, price}]."""
+    """Kampanya kapsamına giren sipariş kalemleri. items: [{name, qty, price, product_id}].
+    Önce ürün ID'siyle eşleşir; kalemde ID yoksa ada düşer (yedek)."""
     if not camp.get("scope_type") or camp["scope_type"] == "all":
         return items
-    names = camp.get("scope_products")
-    if not names:
-        return []
-    nameset = set(names)
-    return [i for i in items if i.get("name") in nameset]
+    idset = set(camp.get("scope_product_ids") or [])
+    nameset = set(camp.get("scope_products") or [])
+    out = []
+    for i in items:
+        pid = i.get("product_id")
+        if pid is not None:
+            if pid in idset:
+                out.append(i)
+        elif i.get("name") in nameset:
+            out.append(i)
+    return out
 
 
 def _compute_discount(items, campaigns):
@@ -239,6 +267,20 @@ async def chat(req: ChatRequest):
             try:
                 cart = json.loads(match.group(1).strip())
             except:
+                pass
+
+        # AI sepetindeki her ürünü kanonik ProductID'ye bağla. Böylece kampanya
+        # kapsamı isimle değil ID ile eşleşir (dil/yazım farklarından etkilenmez).
+        if isinstance(cart, list) and cart:
+            try:
+                db = get_db()
+                cur = db.cursor(dictionary=True)
+                index = _product_index(cur)
+                db.close()
+                for it in cart:
+                    if isinstance(it, dict):
+                        it["product_id"] = index.get(_norm(it.get("ad", "")))
+            except Exception:
                 pass
 
         audio_b64 = make_audio_b64(clean, lang, req.gender)
