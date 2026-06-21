@@ -65,23 +65,38 @@ def _parse_json(val):
     return val
 
 
-def _resolve_scope_products(cur, scope_type, scope_ids):
-    """Kampanya kapsamını sepetin eşleştirebileceği ürün adları listesine çevirir.
-    'all' -> None (tüm ürünler geçerli). 'category'/'product' -> ürün adı listesi."""
+def _resolve_scope(cur, scope_type, scope_ids, lang="tr"):
+    """Kampanya kapsamını çözer. İki liste döner:
+      - match:  eşleştirme için ÜÇ DİLDEKİ tüm ürün adları (TR+EN+AR). Sepet hangi
+                dilde olursa olsun bu set ile eşleşir → dilden bağımsız kapsam.
+      - labels: gösterim için yalnızca istenen dildeki adlar.
+    'all' / kapsamsız -> (None, None)."""
     if scope_type not in ("category", "product") or not scope_ids:
-        return None
+        return None, None
     col = "CategoryID" if scope_type == "category" else "ProductID"
     placeholders = ",".join(["%s"] * len(scope_ids))
     cur.execute(
-        f"SELECT ProductName FROM products WHERE {col} IN ({placeholders})",
+        f"SELECT ProductName, ProductName_en, ProductName_ar "
+        f"FROM products WHERE {col} IN ({placeholders})",
         tuple(scope_ids),
     )
-    return [r["ProductName"] for r in cur.fetchall()]
+    rows = cur.fetchall()
+    label_col = {"en": "ProductName_en", "ar": "ProductName_ar"}.get(lang, "ProductName")
+    match, labels = [], []
+    for r in rows:
+        for k in ("ProductName", "ProductName_en", "ProductName_ar"):
+            if r.get(k):
+                match.append(r[k])
+        labels.append(r.get(label_col) or r["ProductName"])
+    # Sırayı koruyarak tekrarsızlaştır
+    return list(dict.fromkeys(match)), list(dict.fromkeys(labels))
 
 
-def _fetch_active_campaigns(cur):
-    """Aktif ve tarihi geçerli kampanyaları kapsam (scope_products) çözülmüş
-    biçimde döndürür. Dictionary cursor bekler. /campaigns ve /order ortak kullanır."""
+def _fetch_active_campaigns(cur, lang="tr"):
+    """Aktif ve tarihi geçerli kampanyaları kapsam çözülmüş biçimde döndürür.
+    Dictionary cursor bekler. /campaigns ve /order ortak kullanır.
+      - scope_products: eşleştirme seti (tüm diller) — indirim hesabı bunu kullanır.
+      - scope_labels:   gösterim için istenen dildeki adlar."""
     cur.execute(
         """SELECT * FROM campaigns
            WHERE is_active = TRUE
@@ -94,6 +109,7 @@ def _fetch_active_campaigns(cur):
     for row in rows:
         scope_type = row.get("scope_type") or "all"
         scope_ids = _parse_json(row.get("scope_ids")) or []
+        match, labels = _resolve_scope(cur, scope_type, scope_ids, lang)
         result.append({
             "id":             row["id"],
             "title":          row["title"],
@@ -104,7 +120,8 @@ def _fetch_active_campaigns(cur):
             "start_date":     str(row["start_date"]) if row.get("start_date") else None,
             "end_date":       str(row["end_date"]) if row.get("end_date") else None,
             "scope_type":     scope_type,
-            "scope_products": _resolve_scope_products(cur, scope_type, scope_ids),
+            "scope_products": match,
+            "scope_labels":   labels,
         })
     return result
 
@@ -158,14 +175,15 @@ def _compute_discount(items, campaigns):
 
 
 @router.get("/campaigns")
-async def campaigns():
+async def campaigns(lang: str = "tr"):
     """Müşteriye yalnızca aktif ve tarihi geçerli kampanyaları döndürür.
-    Kapsamı olan kampanyalarda geçerli ürün adları (scope_products) da döner;
-    sepet indirimi yalnızca bu ürünlere uygular."""
+    Kapsamlı kampanyalarda eşleştirme seti (scope_products, tüm diller) ve
+    gösterim adları (scope_labels, istenen dil) döner."""
+    lang = lang if lang in ("tr", "en", "ar") else "tr"
     try:
         db = get_db()
         cur = db.cursor(dictionary=True)
-        result = _fetch_active_campaigns(cur)
+        result = _fetch_active_campaigns(cur, lang)
         db.close()
         return result
     except Exception:

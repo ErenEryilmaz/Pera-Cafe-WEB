@@ -55,7 +55,7 @@ function renderMenu(menuDb) {
 // ── Kampanyalar ───────────────────────────────────────────────
 async function fetchCampaigns() {
     try {
-        const r = await fetch(window.location.origin + '/campaigns');
+        const r = await fetch(window.location.origin + '/campaigns?lang=' + currentLang);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         window._activeCampaigns = await r.json();
         renderCampaigns(window._activeCampaigns);
@@ -83,9 +83,10 @@ function renderCampaigns(list) {
         const color     = c.badge_color || '#E67E22';
         const dates     = (c.start_date || c.end_date)
             ? `<div class="campaign-dates">📅 ${c.start_date||'—'} → ${c.end_date||'—'}</div>` : '';
-        // Kapsamlı kampanyalarda geçerli ürünleri göster (yoksa tüm ürünler geçerli)
-        const scope     = (c.scope_type && c.scope_type !== 'all' && c.scope_products && c.scope_products.length)
-            ? `<div class="campaign-dates">🎯 ${c.scope_products.join(', ')}</div>` : '';
+        // Kapsamlı kampanyalarda geçerli ürünleri (seçili dilde) göster
+        const scopeNames = c.scope_labels || c.scope_products;
+        const scope     = (c.scope_type && c.scope_type !== 'all' && scopeNames && scopeNames.length)
+            ? `<div class="campaign-dates">🎯 ${scopeNames.join(', ')}</div>` : '';
         return `
             <div class="campaign-card" style="border-left-color:${color}">
                 <span class="campaign-badge" style="background:${color}">${badgeText}</span>

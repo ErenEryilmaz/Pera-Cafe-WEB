@@ -16,6 +16,12 @@ CREATE TABLE IF NOT EXISTS campaigns (
   --   percentage  -> {"percent":10}
   --   fixed       -> {"amount":20}
   config      JSON NOT NULL,
+  -- Kapsam: kampanya hangi ürünlere uygulanacak
+  --   scope_type='all'      -> tüm ürünler
+  --   scope_type='category' -> scope_ids içindeki kategori ID'leri
+  --   scope_type='product'  -> scope_ids içindeki ürün ID'leri
+  scope_type  ENUM('all','category','product') NOT NULL DEFAULT 'all',
+  scope_ids   JSON NULL,
   badge_color VARCHAR(20) DEFAULT '#E67E22',
   is_active   BOOLEAN DEFAULT TRUE,
   start_date  DATE NULL,
