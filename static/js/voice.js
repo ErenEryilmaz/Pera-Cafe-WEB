@@ -5,6 +5,11 @@ let currentAudio = null;
 let voiceEnabled = false;
 window.isPeraSpeaking = false;
 
+// Kullanıcı konuşurken kısa duraklamalarda kesilmesin: ses geldikçe sıfırlanan
+// bir sayaç tutarız. SILENCE_MS kadar (2 sn) yeni ses gelmezse cümle bitti sayılır.
+let silenceTimer = null;
+const SILENCE_MS = 2000;   // ← bekleme süresi (ms). 2 sn sessizlik = konuşma bitti
+
 // ── Pill UI ──────────────────────────────────────────────────
 function getPillText(mode) {
     // pillListen fonksiyon — kullanıcı adıyla kişiselleştirilmiş
@@ -53,6 +58,7 @@ function playBeep() {
 
 // ── Speech Recognition ───────────────────────────────────────
 function killSR() {
+    clearTimeout(silenceTimer);
     if (!recognition) return;
     const old = recognition;
     recognition  = null;
@@ -71,25 +77,36 @@ function startSR() {
     const myId = ++srId;
     const sr   = new SR();
     sr.lang           = t.speechLang;
-    sr.continuous     = false;
-    sr.interimResults = false;
+    sr.continuous     = true;    // kısa duraklamada kesme — sürekli dinle
+    sr.interimResults = true;    // ara sonuçlarla sessizliği anında takip et
     recognition = sr;
+
+    // 2 sn boyunca yeni ses gelmezse cümle tamamlandı say ve gönder.
+    const finalize = (text) => {
+        if (myId !== srId) return;
+        clearTimeout(silenceTimer);
+        const tx = (text || '').trim();
+        if (tx.length <= 1) return;   // anlamlı bir şey yok → dinlemeye devam
+        srId++;                       // bu örneği geçersiz kıl (onend/onresult yok sayılır)
+        killSR();
+        playBeep();
+        sendMessage(tx);              // sendMessage işi bitince dinlemeyi sürdürür
+    };
 
     sr.onresult = (e) => {
         if (myId !== srId) return;
-        srId++;
-        const tx = e.results[0][0].transcript.trim();
-        if (tx.length > 1) {
-            playBeep();
-            sendMessage(tx);
-        } else {
-            setPill('listen');
-            setTimeout(() => { if (voiceEnabled && myId === srId) startSR(); }, 200);
-        }
+        // Oturumdaki tüm parçaları (kesinleşmiş + ara) birleştir
+        let txt = '';
+        for (let i = 0; i < e.results.length; i++) txt += e.results[i][0].transcript;
+        setPill('listen');
+        // Her ses parçasında 2 sn sayacı baştan başlar
+        clearTimeout(silenceTimer);
+        silenceTimer = setTimeout(() => finalize(txt), SILENCE_MS);
     };
 
     sr.onerror = (e) => {
         if (myId !== srId) return;
+        clearTimeout(silenceTimer);
         if (e.error === 'not-allowed') {
             voiceEnabled = false; setPill('off'); updatePillText(); return;
         }
@@ -99,6 +116,7 @@ function startSR() {
 
     sr.onend = () => {
         if (myId !== srId) return;
+        clearTimeout(silenceTimer);
         setTimeout(() => { if (voiceEnabled && myId === srId) startSR(); }, 150);
     };
 
