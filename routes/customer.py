@@ -125,7 +125,16 @@ async def chat(req: ChatRequest):
             for m in req.messages[:-1]
         ]
         resp = model.start_chat(history=hist).send_message(last_msg)
-        bot = resp.text
+        # resp.text, yanıt güvenlik filtresine takılır / boş dönerse ValueError fırlatır.
+        # Bu durumda 500 vermek yerine kibarca devam et.
+        try:
+            bot = resp.text
+        except Exception:
+            bot = {
+                "tr": "Pardon, onu tam anlayamadım. Tekrar söyler misin?",
+                "en": "Sorry, I didn't quite catch that. Could you say it again?",
+                "ar": "عذراً، لم أفهم ذلك تماماً. هل يمكنك إعادة القول؟",
+            }.get(lang, "Pardon, tekrar söyler misin?")
 
         match = re.search(r"SIPARIS_JSON:(.*)", bot, re.DOTALL)
         cart = None

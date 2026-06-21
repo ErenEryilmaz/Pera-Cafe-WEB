@@ -126,7 +126,11 @@ async function sendMessage(textOverride = null) {
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ messages: chatMessages, user_name: userName, lang: currentLang, gender: currentGender }),
         });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        if (!res.ok) {
+            let detail = '';
+            try { detail = (await res.json()).detail || ''; } catch(_) {}
+            throw new Error('HTTP ' + res.status + (detail ? ' — ' + detail : ''));
+        }
         const data = await res.json();
 
         if (data.reply) {
@@ -142,10 +146,10 @@ async function sendMessage(textOverride = null) {
             resumeListening(500);
         }
     } catch(err) {
-        console.error(err);
+        console.error('sendMessage başarısız:', err);
         appendMessage('assistant', t.errServer);
         chatMessages.pop();
-        resumeWakeWord(1000);
+        resumeListening(1000);   // hata olsa da dinlemeye geri dön (eski hatalı çağrı: resumeWakeWord)
     } finally {
         document.getElementById('loading').style.display = 'none';
     }
