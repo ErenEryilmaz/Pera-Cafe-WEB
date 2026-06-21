@@ -79,6 +79,84 @@ def _resolve_scope_products(cur, scope_type, scope_ids):
     return [r["ProductName"] for r in cur.fetchall()]
 
 
+def _fetch_active_campaigns(cur):
+    """Aktif ve tarihi geçerli kampanyaları kapsam (scope_products) çözülmüş
+    biçimde döndürür. Dictionary cursor bekler. /campaigns ve /order ortak kullanır."""
+    cur.execute(
+        """SELECT * FROM campaigns
+           WHERE is_active = TRUE
+             AND (start_date IS NULL OR start_date <= CURDATE())
+             AND (end_date   IS NULL OR end_date   >= CURDATE())
+           ORDER BY created_at DESC"""
+    )
+    rows = cur.fetchall()
+    result = []
+    for row in rows:
+        scope_type = row.get("scope_type") or "all"
+        scope_ids = _parse_json(row.get("scope_ids")) or []
+        result.append({
+            "id":             row["id"],
+            "title":          row["title"],
+            "description":    row.get("description"),
+            "type":           row["type"],
+            "config":         _parse_json(row.get("config")) or {},
+            "badge_color":    row.get("badge_color") or "#E67E22",
+            "start_date":     str(row["start_date"]) if row.get("start_date") else None,
+            "end_date":       str(row["end_date"]) if row.get("end_date") else None,
+            "scope_type":     scope_type,
+            "scope_products": _resolve_scope_products(cur, scope_type, scope_ids),
+        })
+    return result
+
+
+# ── İndirim hesabı (cart.js applyDiscounts ile birebir aynı mantık) ───
+# Sipariş toplamı sunucuda yeniden hesaplanır; client gönderdiği tutara güvenilmez.
+
+def _scope_items(items, camp):
+    """Kampanya kapsamına giren sipariş kalemleri. items: [{name, qty, price}]."""
+    if not camp.get("scope_type") or camp["scope_type"] == "all":
+        return items
+    names = camp.get("scope_products")
+    if not names:
+        return []
+    nameset = set(names)
+    return [i for i in items if i.get("name") in nameset]
+
+
+def _compute_discount(items, campaigns):
+    """Aktif kampanyaların toplam indirim tutarını hesaplar."""
+    total = 0.0
+    for camp in campaigns:
+        if not camp:
+            continue
+        scoped = _scope_items(items, camp)
+        if not scoped:
+            continue
+        ctype = camp.get("type")
+        cfg = camp.get("config") or {}
+        if ctype == "buy_x_get_y":
+            buy = cfg.get("buy") or 2
+            get = cfg.get("get") or 1
+            for it in scoped:
+                qty = int(it.get("qty") or 0)
+                price = float(it.get("price") or 0)
+                sets = qty // (buy + get)
+                remainder = qty % (buy + get)
+                free_count = sets * get + (remainder - buy if remainder > buy else 0)
+                if free_count > 0:
+                    total += free_count * price
+        elif ctype == "percentage":
+            raw = sum(float(i.get("price") or 0) * int(i.get("qty") or 0) for i in scoped)
+            total += raw * ((cfg.get("percent") or 0) / 100)
+        elif ctype == "fixed":
+            amount = float(cfg.get("amount") or 0)
+            for it in scoped:
+                qty = int(it.get("qty") or 0)
+                price = float(it.get("price") or 0)
+                total += min(amount, price) * qty
+    return total
+
+
 @router.get("/campaigns")
 async def campaigns():
     """Müşteriye yalnızca aktif ve tarihi geçerli kampanyaları döndürür.
@@ -87,32 +165,7 @@ async def campaigns():
     try:
         db = get_db()
         cur = db.cursor(dictionary=True)
-        cur.execute(
-            """SELECT * FROM campaigns
-               WHERE is_active = TRUE
-                 AND (start_date IS NULL OR start_date <= CURDATE())
-                 AND (end_date   IS NULL OR end_date   >= CURDATE())
-               ORDER BY created_at DESC"""
-        )
-        rows = cur.fetchall()
-
-        result = []
-        for row in rows:
-            scope_type = row.get("scope_type") or "all"
-            scope_ids = _parse_json(row.get("scope_ids")) or []
-            scope_products = _resolve_scope_products(cur, scope_type, scope_ids)
-            result.append({
-                "id":             row["id"],
-                "title":          row["title"],
-                "description":    row.get("description"),
-                "type":           row["type"],
-                "config":         _parse_json(row.get("config")) or {},
-                "badge_color":    row.get("badge_color") or "#E67E22",
-                "start_date":     str(row["start_date"]) if row.get("start_date") else None,
-                "end_date":       str(row["end_date"]) if row.get("end_date") else None,
-                "scope_type":     scope_type,
-                "scope_products": scope_products,
-            })
+        result = _fetch_active_campaigns(cur)
         db.close()
         return result
     except Exception:
@@ -183,8 +236,15 @@ async def chat(req: ChatRequest):
 async def create_order(req: OrderCreateReq):
     try:
         db = get_db()
-        cur = db.cursor()
-        total = sum(i.get("qty", 1) * i.get("price", 0) for i in req.items)
+        cur = db.cursor(dictionary=True)
+        raw_total = sum(i.get("qty", 1) * i.get("price", 0) for i in req.items)
+        # Kampanya indirimi sunucuda hesaplanır (client'ın gönderdiği tutara güvenilmez).
+        # Hesap herhangi bir nedenle hata verirse indirimsiz tutara güvenli düşülür.
+        try:
+            discount = _compute_discount(req.items, _fetch_active_campaigns(cur))
+        except Exception:
+            discount = 0.0
+        total = max(0, raw_total - discount)
         cur.execute(
             "INSERT INTO Orders (TableNo, MemberPhone, TotalAmount, Notes) VALUES (%s,%s,%s,%s)",
             (req.table_no, req.member_phone, total, req.notes),

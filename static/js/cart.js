@@ -73,9 +73,19 @@ function applyDiscounts(cartItems, campaigns) {
             const saving   = rawTotal * (camp.config.percent / 100);
             if (saving > 0) discounts.push({ label: `${camp.title} (%${camp.config.percent})`, amount: saving });
         } else if (camp.type === 'fixed') {
-            const rawTotal = items.reduce((s, i) => s + i.fiyat * i.qty, 0);
-            const saving   = Math.min(camp.config.amount, rawTotal);
-            if (saving > 0) discounts.push({ label: `${camp.title} (-${camp.config.amount}₺)`, amount: saving });
+            // Sabit indirim ürün ADEDİNE göre uygulanır: her birim için 'amount'
+            // kadar düşülür (birim fiyatını aşamaz, satır eksiye düşmesin diye).
+            let saving = 0, count = 0;
+            items.forEach(item => {
+                saving += Math.min(camp.config.amount, item.fiyat) * item.qty;
+                count  += item.qty;
+            });
+            if (saving > 0) {
+                const label = count > 1
+                    ? `${camp.title} (-${camp.config.amount}₺ × ${count})`
+                    : `${camp.title} (-${camp.config.amount}₺)`;
+                discounts.push({ label, amount: saving });
+            }
         }
     });
 
