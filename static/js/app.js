@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchCampaigns();
     initRecognition();
 
+    // Yarım kalmış sipariş varsa (sayfa yenilendi) takip popup'ını geri aç
+    restoreOrderTracking();
+
     // Giriş cümlesini sesli söyle, bitince dinlemeye başla
     speakGreeting();
 });
@@ -176,6 +179,9 @@ function handleKeyPress(e) { if (e.key === 'Enter') sendMessage(); }
 
 function logout() {
     localStorage.removeItem('userName');
+    localStorage.removeItem('userPhone');
+    localStorage.removeItem('peraActiveOrder');   // önceki kullanıcının siparişi yeni kullanıcıda açılmasın
+    sessionStorage.removeItem('peraTrackDismissed');
     window.location.href = 'perakafe_login.html';
 }
 

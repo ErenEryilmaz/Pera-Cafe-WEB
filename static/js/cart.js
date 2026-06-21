@@ -151,6 +151,10 @@ async function placeOrder(finalTotal) {
         const data = await r.json();
         cart = [];
         renderCart();
+        // Aktif siparişi kalıcı sakla: sayfa yenilense de takip kaybolmasın,
+        // 'Siparişlerim' sayfası da bunu okuyup canlı durumu gösterebilsin.
+        localStorage.setItem('peraActiveOrder', data.order_id);
+        sessionStorage.removeItem('peraTrackDismissed');
         startOrderTracking(data.order_id);
     } catch(e) {
         appendMessage('assistant', '⚠️ Sipariş gönderilemedi: ' + e.message);
@@ -173,6 +177,7 @@ function startOrderTracking(orderId) {
             if (data.Status === 'completed' || data.Status === 'cancelled') {
                 clearInterval(trackingInterval);
                 trackingInterval = null;
+                localStorage.removeItem('peraActiveOrder');   // sipariş bitti → takibi bırak
             }
         } catch(e) {}
     }, 5000);
@@ -196,8 +201,26 @@ function updateTrackSteps(status) {
 function closeOrderTracking() {
     document.getElementById('track-overlay').classList.remove('show');
     if (trackingInterval) { clearInterval(trackingInterval); trackingInterval = null; }
+    // Bu tarayıcı sekmesinde aynı sipariş için popup'ı tekrar açma; ama siparişi
+    // silmiyoruz — 'Siparişlerim' sayfasından durumu görmeye devam edebilir.
+    sessionStorage.setItem('peraTrackDismissed', localStorage.getItem('peraActiveOrder') || '');
 }
 
-    document.getElementById('track-overlay').classList.remove('show');
-    if (trackingInterval) { clearInterval(trackingInterval); trackingInterval = null; }
+// Sayfa yenilendiğinde aktif sipariş varsa takip popup'ını geri getir.
+// app.js açılışta çağırır.
+async function restoreOrderTracking() {
+    const id = localStorage.getItem('peraActiveOrder');
+    if (!id) return;
+    if (sessionStorage.getItem('peraTrackDismissed') === id) return;  // kullanıcı bu sekmede kapattı
+    try {
+        const r = await fetch(window.location.origin + '/order/' + id + '/status');
+        if (!r.ok) { if (r.status === 404) localStorage.removeItem('peraActiveOrder'); return; }
+        const data = await r.json();
+        if (data.Status === 'completed' || data.Status === 'cancelled') {
+            localStorage.removeItem('peraActiveOrder');   // çoktan bitmiş, açma
+            return;
+        }
+        startOrderTracking(id);
+    } catch (e) {}
+}
 

@@ -184,3 +184,35 @@ async def get_order_status(order_id: int):
         raise
     except Exception as e:
         raise HTTPException(500, str(e))
+
+
+@router.get("/orders/by-phone/{phone}")
+async def get_orders_by_phone(phone: str, limit: int = 10):
+    """Bir üyenin son siparişlerini (en yeni üstte) kalemleriyle birlikte döndürür.
+    'Geçmiş siparişler' sayfası bunu kullanır. Üyesiz/misafir siparişler MemberPhone
+    NULL kaydedildiği için burada listelenmez."""
+    limit = max(1, min(limit, 50))  # mantıklı bir tavan
+    try:
+        db = get_db()
+        cur = db.cursor(dictionary=True)
+        cur.execute(
+            """SELECT OrderID, Status, TotalAmount, CreatedAt, Notes
+               FROM Orders WHERE MemberPhone=%s
+               ORDER BY CreatedAt DESC LIMIT %s""",
+            (phone, limit),
+        )
+        orders = cur.fetchall()
+        for o in orders:
+            cur.execute(
+                "SELECT ProductName, Quantity, UnitPrice FROM OrderItems WHERE OrderID=%s",
+                (o["OrderID"],),
+            )
+            o["items"] = cur.fetchall()
+            o["CreatedAt"] = str(o["CreatedAt"])
+            o["TotalAmount"] = float(o["TotalAmount"]) if o["TotalAmount"] is not None else 0.0
+            for it in o["items"]:
+                it["UnitPrice"] = float(it["UnitPrice"]) if it["UnitPrice"] is not None else 0.0
+        db.close()
+        return orders
+    except Exception as e:
+        raise HTTPException(500, str(e))

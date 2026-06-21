@@ -589,10 +589,13 @@ function goRegister(){showScreen('s-register');}
 function goToCafe(){
   waitModelThenGo('btn-start');
 }
-function logout(){localStorage.removeItem('userName');window.location.reload();}
+function logout(){localStorage.removeItem('userName');localStorage.removeItem('userPhone');localStorage.removeItem('peraActiveOrder');sessionStorage.removeItem('peraTrackDismissed');window.location.reload();}
 
 function guestLogin(){
   localStorage.setItem('userName','Misafir');
+  localStorage.removeItem('userPhone');         // misafirin telefonu yok → geçmiş by-phone listelenmez
+  localStorage.removeItem('peraActiveOrder');   // önceki oturumdan kalan siparişi taşıma
+  sessionStorage.removeItem('peraTrackDismissed');
   waitModelThenGo('btn-guest-start');
 }
 
@@ -631,7 +634,13 @@ async function doLogin(){
       btn.disabled=false;
       btn.textContent=t.btnLogin;
       if(data.success){
+        // Farklı bir numarayla giriş → öncekinin aktif siparişini taşıma (kiosk/paylaşımlı cihaz)
+        if((localStorage.getItem('userPhone')||'')!==raw){
+          localStorage.removeItem('peraActiveOrder');
+          sessionStorage.removeItem('peraTrackDismissed');
+        }
         localStorage.setItem('userName',data.name);
+        localStorage.setItem('userPhone',raw);
         document.getElementById('member-name').textContent='👋 '+data.name;
         showScreen('s-welcome');
         // Model hazır değilse butonu loading yap
@@ -705,6 +714,11 @@ async function doRegister(){
       btn.disabled=false;
       btn.textContent=t.btnRegister;
       if(data.success){
+        // Yeni kayıt = yeni numara → varsa önceki oturumun aktif siparişini taşıma
+        localStorage.removeItem('peraActiveOrder');
+        sessionStorage.removeItem('peraTrackDismissed');
+        localStorage.setItem('userName',name);
+        localStorage.setItem('userPhone',raw);
         document.getElementById('welcome-name').textContent='👋 '+name+'!';
         document.getElementById('welcome-sub').textContent=t.regWelcomeSub+' (+90 '+formatPhone(raw)+')';
         showScreen('s-success');
