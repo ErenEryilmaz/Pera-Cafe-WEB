@@ -331,6 +331,19 @@ select.filter{background:var(--surface2);border:1px solid var(--border);border-r
         <input type="number" id="camp-fix" min="1" value="20">
       </div>
     </div>
+    <!-- Kapsam: hangi ürünlere uygulanacak -->
+    <div class="form-group">
+      <label>Hangi Ürünlere Uygulanacak?</label>
+      <select id="camp-scope" onchange="updateCampScope()">
+        <option value="all">Tüm Ürünler</option>
+        <option value="category">Kategori Bazlı</option>
+        <option value="product">Ürün Bazlı</option>
+      </select>
+    </div>
+    <div class="form-group" id="camp-scope-targets" style="display:none">
+      <label id="camp-scope-label">Kategoriler</label>
+      <div id="camp-scope-list" style="max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;border:1px solid var(--border);border-radius:var(--r-sm);padding:10px;background:var(--surface2)"></div>
+    </div>
     <div style="display:flex;gap:10px">
       <div class="form-group" style="flex:1">
         <label>Başlangıç Tarihi</label>
@@ -1019,12 +1032,64 @@ async function loadReports() {
 // ══════════════════════════════════════════════════════════════
 let editingCampId = null;
 let selectedColor = '#27AE60';
+let campCats  = null;   // kapsam seçimi için kategori önbelleği
+let campProds = null;   // kapsam seçimi için ürün önbelleği
 
 const CAMP_TYPE_LABELS = {
     buy_x_get_y: (c) => `${c.buy} ALANA ${c.get} BEDAVA`,
     percentage:  (c) => `%${c.percent} İNDİRİM`,
     fixed:       (c) => `${c.amount}₺ İNDİRİM`,
 };
+
+// Kapsam (scope) için kategori + ürün listelerini bir kez yükleyip önbelleğe al
+async function ensureCampTargets() {
+    try {
+        if (!campCats)  campCats  = await apiFetch('/admin/categories');
+        if (!campProds) campProds = await apiFetch('/admin/products');
+    } catch(e) { campCats = campCats || []; campProds = campProds || []; }
+}
+
+function campScopeCheckbox(id, label, selectedSet) {
+    const checked = selectedSet.has(Number(id)) ? 'checked' : '';
+    return `<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" class="camp-target-cb" value="${id}" ${checked}>
+        <span>${label}</span></label>`;
+}
+
+function applyCampScopeVisibility() {
+    const type = document.getElementById('camp-scope').value;
+    document.getElementById('camp-scope-targets').style.display = type === 'all' ? 'none' : 'block';
+    document.getElementById('camp-scope-label').textContent = type === 'category' ? 'Kategoriler' : 'Ürünler';
+}
+
+function renderCampScopeList(selectedIds) {
+    const type = document.getElementById('camp-scope').value;
+    const box  = document.getElementById('camp-scope-list');
+    if (type === 'all') { box.innerHTML = ''; return; }
+    const sel = new Set((selectedIds || []).map(Number));
+    if (type === 'category') {
+        const cats = campCats || [];
+        box.innerHTML = cats.length
+            ? cats.map(c => campScopeCheckbox(c.CategoryID, c.CategoryName, sel)).join('')
+            : '<div style="color:var(--text2);font-size:12px">Kategori bulunamadı.</div>';
+    } else {
+        const prods = campProds || [];
+        if (!prods.length) { box.innerHTML = '<div style="color:var(--text2);font-size:12px">Ürün bulunamadı.</div>'; return; }
+        // Ürünleri kategoriye göre grupla (okunabilirlik için)
+        const byCat = {};
+        prods.forEach(p => { (byCat[p.CategoryName] = byCat[p.CategoryName] || []).push(p); });
+        box.innerHTML = Object.keys(byCat).map(cat =>
+            `<div style="font-weight:600;color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-top:4px">${cat}</div>` +
+            byCat[cat].map(p => campScopeCheckbox(p.ProductID, p.ProductName, sel)).join('')
+        ).join('');
+    }
+}
+
+// Kapsam tipi değişince: görünürlüğü güncelle ve listeyi (seçim sıfırlanarak) yeniden çiz
+function updateCampScope() {
+    applyCampScopeVisibility();
+    renderCampScopeList([]);
+}
 
 async function loadCampaigns() {
     setRefreshTime();
@@ -1039,9 +1104,25 @@ async function loadCampaigns() {
           </div>
         </div>`;
     try {
+        await ensureCampTargets();   // kapsam adlarını gösterebilmek için kategori/ürün önbelleği
         const camps = await apiFetch('/admin/campaigns');
         renderCampaignList(camps);
     } catch(e) { showToast(e.message, 'err'); }
+}
+
+// Kampanyanın kapsamını okunabilir metne çevir (admin kart için)
+function campScopeText(c) {
+    if (!c.scope_type || c.scope_type === 'all') return '🎯 Tüm ürünler';
+    const ids = c.scope_ids || [];
+    if (!ids.length) return '🎯 Hedef seçilmemiş';
+    if (c.scope_type === 'category') {
+        const map = {}; (campCats  || []).forEach(x => map[x.CategoryID] = x.CategoryName);
+        const names = ids.map(id => map[id]).filter(Boolean);
+        return '🎯 ' + (names.length ? names.join(', ') : `${ids.length} kategori`);
+    }
+    const map = {}; (campProds || []).forEach(x => map[x.ProductID] = x.ProductName);
+    const names = ids.map(id => map[id]).filter(Boolean);
+    return '🎯 ' + (names.length ? names.join(', ') : `${ids.length} ürün`);
 }
 
 function renderCampaignList(list) {
@@ -1066,6 +1147,7 @@ function renderCampaignList(list) {
             <div class="camp-title">${c.title}</div>
             ${c.description ? `<div class="camp-desc">${c.description}</div>` : ''}
             <div class="camp-meta">${dates}</div>
+            <div class="camp-meta">${campScopeText(c)}</div>
           </div>
           <div class="camp-actions">
             <label class="toggle-switch" title="${c.is_active ? 'Aktif — kapat' : 'Pasif — aç'}">
@@ -1098,7 +1180,8 @@ function selectCustomColor(val) {
     document.querySelectorAll('#camp-colors .color-dot').forEach(d => d.classList.remove('active'));
 }
 
-function openCampModal(camp = null) {
+async function openCampModal(camp = null) {
+    await ensureCampTargets();
     editingCampId = camp ? camp.id : null;
     document.getElementById('camp-modal-title').textContent = camp ? 'Kampanya Düzenle' : 'Yeni Kampanya';
     document.getElementById('camp-title').value  = camp?.title || '';
@@ -1133,6 +1216,11 @@ function openCampModal(camp = null) {
     document.querySelectorAll('#camp-colors .color-dot').forEach(d => {
         d.classList.toggle('active', d.dataset.color === selectedColor);
     });
+
+    // Kapsam (scope)
+    document.getElementById('camp-scope').value = camp?.scope_type || 'all';
+    applyCampScopeVisibility();
+    renderCampScopeList(camp?.scope_ids || []);
 
     openModal('camp-modal');
 }
@@ -1187,7 +1275,18 @@ async function saveCampaign() {
         config = {amount: amt};
     }
 
-    const body = {title, description: desc, type, config, badge_color: selectedColor, is_active: active, start_date: start, end_date: end};
+    // Kapsam (scope): hangi ürünlere uygulanacak
+    const scopeType = document.getElementById('camp-scope').value;
+    let scopeIds = [];
+    if (scopeType !== 'all') {
+        scopeIds = [...document.querySelectorAll('#camp-scope-list .camp-target-cb:checked')].map(cb => parseInt(cb.value));
+        if (!scopeIds.length) {
+            showToast(scopeType === 'category' ? 'En az bir kategori seçin.' : 'En az bir ürün seçin.', 'err');
+            return;
+        }
+    }
+
+    const body = {title, description: desc, type, config, badge_color: selectedColor, is_active: active, start_date: start, end_date: end, scope_type: scopeType, scope_ids: scopeIds};
 
     try {
         if (editingCampId) {

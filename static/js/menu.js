@@ -83,12 +83,16 @@ function renderCampaigns(list) {
         const color     = c.badge_color || '#E67E22';
         const dates     = (c.start_date || c.end_date)
             ? `<div class="campaign-dates">📅 ${c.start_date||'—'} → ${c.end_date||'—'}</div>` : '';
+        // Kapsamlı kampanyalarda geçerli ürünleri göster (yoksa tüm ürünler geçerli)
+        const scope     = (c.scope_type && c.scope_type !== 'all' && c.scope_products && c.scope_products.length)
+            ? `<div class="campaign-dates">🎯 ${c.scope_products.join(', ')}</div>` : '';
         return `
             <div class="campaign-card" style="border-left-color:${color}">
                 <span class="campaign-badge" style="background:${color}">${badgeText}</span>
                 <div class="campaign-title">${c.title}</div>
                 ${c.description ? `<div class="campaign-desc">${c.description}</div>` : ''}
                 ${dates}
+                ${scope}
             </div>`;
     }).join('');
 }

@@ -38,15 +38,28 @@ function changeQty(index, delta) {
 function clearCart() { cart = []; renderCart(); }
 
 // ── İndirim hesabı ────────────────────────────────────────────
+// Kampanyanın kapsamına (scope) giren sepet kalemlerini döndürür.
+//   scope_type 'all' / tanımsız  → tüm sepet
+//   scope_type 'category'/'product' → scope_products (ürün adları) ile eşleşenler
+function campaignScopeItems(cartItems, camp) {
+    if (!camp.scope_type || camp.scope_type === 'all') return cartItems;
+    const names = camp.scope_products;
+    if (!names || !names.length) return [];   // kapsam var ama hedef ürün yok → uygulanmaz
+    const set = new Set(names);
+    return cartItems.filter(i => set.has(i.ad));
+}
+
 function applyDiscounts(cartItems, campaigns) {
     let discounts = [];
 
     campaigns.forEach(camp => {
         if (!camp) return;
+        const items = campaignScopeItems(cartItems, camp);
+        if (!items.length) return;   // kapsamdaki ürün sepette yok → indirim yok
         if (camp.type === 'buy_x_get_y') {
             const buy = camp.config.buy || 2;
             const get = camp.config.get || 1;
-            cartItems.forEach(item => {
+            items.forEach(item => {
                 const sets      = Math.floor(item.qty / (buy + get));
                 const remainder = item.qty % (buy + get);
                 const freeCount = sets * get + (remainder > buy ? remainder - buy : 0);
@@ -56,11 +69,11 @@ function applyDiscounts(cartItems, campaigns) {
                 }
             });
         } else if (camp.type === 'percentage') {
-            const rawTotal = cartItems.reduce((s, i) => s + i.fiyat * i.qty, 0);
+            const rawTotal = items.reduce((s, i) => s + i.fiyat * i.qty, 0);
             const saving   = rawTotal * (camp.config.percent / 100);
             if (saving > 0) discounts.push({ label: `${camp.title} (%${camp.config.percent})`, amount: saving });
         } else if (camp.type === 'fixed') {
-            const rawTotal = cartItems.reduce((s, i) => s + i.fiyat * i.qty, 0);
+            const rawTotal = items.reduce((s, i) => s + i.fiyat * i.qty, 0);
             const saving   = Math.min(camp.config.amount, rawTotal);
             if (saving > 0) discounts.push({ label: `${camp.title} (-${camp.config.amount}₺)`, amount: saving });
         }

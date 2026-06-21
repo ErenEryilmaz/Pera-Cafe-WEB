@@ -73,6 +73,8 @@ class CampaignCreateReq(BaseModel):
     is_active: bool = True
     start_date: Optional[str] = None   # "YYYY-MM-DD"
     end_date: Optional[str] = None
+    scope_type: str = "all"            # all | category | product
+    scope_ids: List[int] = []          # kategori ID'leri ya da ürün ID'leri
 
 
 class CampaignUpdateReq(BaseModel):
@@ -84,3 +86,5 @@ class CampaignUpdateReq(BaseModel):
     is_active: Optional[bool] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+    scope_type: Optional[str] = None
+    scope_ids: Optional[List[int]] = None

@@ -16,25 +16,33 @@ router = APIRouter(prefix="/admin")
 def _format_campaign(row: dict) -> dict:
     """DB satırını frontend'in beklediği biçime çevir:
     config -> dict, tarihler -> 'YYYY-MM-DD' string/None, is_active -> bool."""
-    cfg = row.get("config")
-    if isinstance(cfg, (bytes, bytearray)):
-        cfg = cfg.decode("utf-8")
-    if isinstance(cfg, str):
-        try:
-            cfg = json.loads(cfg)
-        except Exception:
-            cfg = {}
+    cfg = _parse_json_field(row.get("config")) or {}
+    scope_ids = _parse_json_field(row.get("scope_ids")) or []
     return {
         "id":          row["id"],
         "title":       row["title"],
         "description": row.get("description"),
         "type":        row["type"],
-        "config":      cfg or {},
+        "config":      cfg,
         "badge_color": row.get("badge_color") or "#E67E22",
         "is_active":   bool(row.get("is_active")),
         "start_date":  str(row["start_date"]) if row.get("start_date") else None,
         "end_date":    str(row["end_date"]) if row.get("end_date") else None,
+        "scope_type":  row.get("scope_type") or "all",
+        "scope_ids":   [int(i) for i in scope_ids] if isinstance(scope_ids, list) else [],
     }
+
+
+def _parse_json_field(val):
+    """DB'den gelen JSON sütununu (bytes/str/None) Python nesnesine çevirir."""
+    if isinstance(val, (bytes, bytearray)):
+        val = val.decode("utf-8")
+    if isinstance(val, str):
+        try:
+            return json.loads(val)
+        except Exception:
+            return None
+    return val
 
 
 # ── Auth ─────────────────────────────────────────────────────
@@ -403,6 +411,7 @@ async def report_hourly(_: str = Depends(verify_token)):
 # ── Kampanyalar ──────────────────────────────────────────────
 
 VALID_CAMP_TYPES = ("buy_x_get_y", "percentage", "fixed")
+VALID_CAMP_SCOPES = ("all", "category", "product")
 
 
 @router.get("/campaigns")
@@ -422,17 +431,24 @@ async def get_campaigns(_: str = Depends(verify_token)):
 async def add_campaign(req: CampaignCreateReq, _: str = Depends(verify_token)):
     if req.type not in VALID_CAMP_TYPES:
         raise HTTPException(400, f"Geçersiz tip. Geçerli değerler: {VALID_CAMP_TYPES}")
+    if req.scope_type not in VALID_CAMP_SCOPES:
+        raise HTTPException(400, f"Geçersiz kapsam. Geçerli değerler: {VALID_CAMP_SCOPES}")
+    # 'all' kapsamında hedef ID tutulmaz; aksi halde en az bir hedef olmalı.
+    scope_ids = [] if req.scope_type == "all" else list(req.scope_ids)
+    if req.scope_type != "all" and not scope_ids:
+        raise HTTPException(400, "Kapsam 'category' veya 'product' iken en az bir hedef seçilmelidir.")
     try:
         db = get_db()
         cur = db.cursor()
         cur.execute(
             """INSERT INTO campaigns
-               (title, description, type, config, badge_color, is_active, start_date, end_date)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+               (title, description, type, config, badge_color, is_active, start_date, end_date, scope_type, scope_ids)
+               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
             (
                 req.title, req.description, req.type, json.dumps(req.config),
                 req.badge_color, req.is_active,
                 req.start_date or None, req.end_date or None,
+                req.scope_type, json.dumps(scope_ids),
             ),
         )
         db.commit()
@@ -456,6 +472,15 @@ async def update_campaign(campaign_id: int, req: CampaignUpdateReq, _: str = Dep
     if req.is_active   is not None: fields.append("is_active=%s");   vals.append(req.is_active)
     if req.start_date  is not None: fields.append("start_date=%s");  vals.append(req.start_date or None)
     if req.end_date    is not None: fields.append("end_date=%s");    vals.append(req.end_date or None)
+    if req.scope_type is not None:
+        if req.scope_type not in VALID_CAMP_SCOPES:
+            raise HTTPException(400, f"Geçersiz kapsam. Geçerli değerler: {VALID_CAMP_SCOPES}")
+        fields.append("scope_type=%s"); vals.append(req.scope_type)
+    # 'all' iken hedef listesi her zaman temizlenir; aksi halde gönderildiyse güncellenir.
+    if req.scope_type == "all":
+        fields.append("scope_ids=%s"); vals.append(json.dumps([]))
+    elif req.scope_ids is not None:
+        fields.append("scope_ids=%s"); vals.append(json.dumps(list(req.scope_ids)))
     if not fields:
         return {"success": True, "message": "Değişiklik yok."}
     vals.append(campaign_id)

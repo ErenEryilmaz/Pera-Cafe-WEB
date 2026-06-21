@@ -54,9 +54,36 @@ async def menu(lang: str = "tr"):
     return {"menu": m}
 
 
+def _parse_json(val):
+    if isinstance(val, (bytes, bytearray)):
+        val = val.decode("utf-8")
+    if isinstance(val, str):
+        try:
+            return json.loads(val)
+        except Exception:
+            return None
+    return val
+
+
+def _resolve_scope_products(cur, scope_type, scope_ids):
+    """Kampanya kapsamını sepetin eşleştirebileceği ürün adları listesine çevirir.
+    'all' -> None (tüm ürünler geçerli). 'category'/'product' -> ürün adı listesi."""
+    if scope_type not in ("category", "product") or not scope_ids:
+        return None
+    col = "CategoryID" if scope_type == "category" else "ProductID"
+    placeholders = ",".join(["%s"] * len(scope_ids))
+    cur.execute(
+        f"SELECT ProductName FROM products WHERE {col} IN ({placeholders})",
+        tuple(scope_ids),
+    )
+    return [r["ProductName"] for r in cur.fetchall()]
+
+
 @router.get("/campaigns")
 async def campaigns():
-    """Müşteriye yalnızca aktif ve tarihi geçerli kampanyaları döndürür."""
+    """Müşteriye yalnızca aktif ve tarihi geçerli kampanyaları döndürür.
+    Kapsamı olan kampanyalarda geçerli ürün adları (scope_products) da döner;
+    sepet indirimi yalnızca bu ürünlere uygular."""
     try:
         db = get_db()
         cur = db.cursor(dictionary=True)
@@ -68,31 +95,28 @@ async def campaigns():
                ORDER BY created_at DESC"""
         )
         rows = cur.fetchall()
+
+        result = []
+        for row in rows:
+            scope_type = row.get("scope_type") or "all"
+            scope_ids = _parse_json(row.get("scope_ids")) or []
+            scope_products = _resolve_scope_products(cur, scope_type, scope_ids)
+            result.append({
+                "id":             row["id"],
+                "title":          row["title"],
+                "description":    row.get("description"),
+                "type":           row["type"],
+                "config":         _parse_json(row.get("config")) or {},
+                "badge_color":    row.get("badge_color") or "#E67E22",
+                "start_date":     str(row["start_date"]) if row.get("start_date") else None,
+                "end_date":       str(row["end_date"]) if row.get("end_date") else None,
+                "scope_type":     scope_type,
+                "scope_products": scope_products,
+            })
         db.close()
+        return result
     except Exception:
         return []
-
-    result = []
-    for row in rows:
-        cfg = row.get("config")
-        if isinstance(cfg, (bytes, bytearray)):
-            cfg = cfg.decode("utf-8")
-        if isinstance(cfg, str):
-            try:
-                cfg = json.loads(cfg)
-            except Exception:
-                cfg = {}
-        result.append({
-            "id":          row["id"],
-            "title":       row["title"],
-            "description": row.get("description"),
-            "type":        row["type"],
-            "config":      cfg or {},
-            "badge_color": row.get("badge_color") or "#E67E22",
-            "start_date":  str(row["start_date"]) if row.get("start_date") else None,
-            "end_date":    str(row["end_date"]) if row.get("end_date") else None,
-        })
-    return result
 
 
 @router.post("/chat")
