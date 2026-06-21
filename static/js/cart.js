@@ -1,6 +1,5 @@
 // ── Sepet state ───────────────────────────────────────────────
 let cart = [];
-let trackingInterval = null;
 
 // ── Sepet güncelleme ─────────────────────────────────────────
 function mergeCart(aiCart) {
@@ -149,78 +148,12 @@ async function placeOrder(finalTotal) {
             return;
         }
         const data = await r.json();
-        cart = [];
-        renderCart();
-        // Aktif siparişi kalıcı sakla: sayfa yenilense de takip kaybolmasın,
-        // 'Siparişlerim' sayfası da bunu okuyup canlı durumu gösterebilsin.
+        // Aktif siparişi sakla ve doğrudan 'Siparişlerim' sayfasına geç.
+        // (Popup kaldırıldı; canlı takip artık orders.html'de yapılıyor.)
         localStorage.setItem('peraActiveOrder', data.order_id);
-        sessionStorage.removeItem('peraTrackDismissed');
-        startOrderTracking(data.order_id);
+        window.location.href = 'orders.html';
     } catch(e) {
         appendMessage('assistant', '⚠️ Sipariş gönderilemedi: ' + e.message);
     }
-}
-
-// ── Sipariş takip ─────────────────────────────────────────────
-function startOrderTracking(orderId) {
-    document.getElementById('track-order-id').textContent = orderId;
-    document.getElementById('track-overlay').classList.add('show');
-    updateTrackSteps('pending');
-
-    if (trackingInterval) clearInterval(trackingInterval);
-    trackingInterval = setInterval(async () => {
-        try {
-            const r = await fetch(window.location.origin + '/order/' + orderId + '/status');
-            if (!r.ok) return;
-            const data = await r.json();
-            updateTrackSteps(data.Status);
-            if (data.Status === 'completed' || data.Status === 'cancelled') {
-                clearInterval(trackingInterval);
-                trackingInterval = null;
-                localStorage.removeItem('peraActiveOrder');   // sipariş bitti → takibi bırak
-            }
-        } catch(e) {}
-    }, 5000);
-}
-
-function updateTrackSteps(status) {
-    const order = ['pending','preparing','ready','completed'];
-    const cur   = order.indexOf(status);
-    order.forEach((s, i) => {
-        const el = document.getElementById('step-' + s);
-        if (!el) return;
-        el.classList.remove('done','active');
-        if (i < cur)        el.classList.add('done');
-        else if (i === cur) el.classList.add('active');
-    });
-    if (status === 'cancelled') {
-        document.getElementById('track-sub').textContent = '❌ Sipariş iptal edildi.';
-    }
-}
-
-function closeOrderTracking() {
-    document.getElementById('track-overlay').classList.remove('show');
-    if (trackingInterval) { clearInterval(trackingInterval); trackingInterval = null; }
-    // Bu tarayıcı sekmesinde aynı sipariş için popup'ı tekrar açma; ama siparişi
-    // silmiyoruz — 'Siparişlerim' sayfasından durumu görmeye devam edebilir.
-    sessionStorage.setItem('peraTrackDismissed', localStorage.getItem('peraActiveOrder') || '');
-}
-
-// Sayfa yenilendiğinde aktif sipariş varsa takip popup'ını geri getir.
-// app.js açılışta çağırır.
-async function restoreOrderTracking() {
-    const id = localStorage.getItem('peraActiveOrder');
-    if (!id) return;
-    if (sessionStorage.getItem('peraTrackDismissed') === id) return;  // kullanıcı bu sekmede kapattı
-    try {
-        const r = await fetch(window.location.origin + '/order/' + id + '/status');
-        if (!r.ok) { if (r.status === 404) localStorage.removeItem('peraActiveOrder'); return; }
-        const data = await r.json();
-        if (data.Status === 'completed' || data.Status === 'cancelled') {
-            localStorage.removeItem('peraActiveOrder');   // çoktan bitmiş, açma
-            return;
-        }
-        startOrderTracking(id);
-    } catch (e) {}
 }
 
