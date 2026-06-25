@@ -85,7 +85,7 @@ BEGIN
         p.IsCold
     FROM products p
     JOIN categories c ON p.CategoryID = c.CategoryID
-    WHERE p.IsAvailable = TRUE;
+    WHERE COALESCE(p.IsActive, 1) = TRUE;
 END //
 DELIMITER ;
 

@@ -297,6 +297,41 @@ async def create_order(req: OrderCreateReq):
     try:
         db = get_db()
         cur = db.cursor(dictionary=True)
+
+        # Aktif/pasif doğrulaması: pasife alınmış (IsActive=0) ürünler sipariş edilemez.
+        # Menü oturum başında AI'ya yükleniyor; bir ürün sohbet sırasında pasife
+        # alınırsa sepette kalabilir. Bu yüzden durumu sipariş anında yeniden kontrol
+        # ediyoruz. Eşleştirme önce ProductID ile, ID yoksa (üç dildeki) ada düşer.
+        cur.execute(
+            "SELECT ProductID, ProductName, ProductName_en, ProductName_ar, "
+            "COALESCE(IsActive,1) AS IsActive FROM products"
+        )
+        prod_rows = cur.fetchall()
+        by_id = {r["ProductID"]: r for r in prod_rows}
+        by_name = {}
+        for r in prod_rows:
+            for k in ("ProductName", "ProductName_en", "ProductName_ar"):
+                if r.get(k):
+                    by_name.setdefault(_norm(r[k]), r)
+
+        unavailable = []
+        for it in req.items:
+            pid = it.get("product_id")
+            row = by_id.get(pid) if pid is not None else None
+            if row is None:
+                row = by_name.get(_norm(it.get("name", "")))
+            # Yalnızca ürünü kesin olarak tanıyıp pasif bulduğumuzda engelle; ne ID'ye
+            # ne ada eşleşen kalemler (ör. AI'nın ürettiği serbest metin) eskisi gibi geçer.
+            if row is not None and not row["IsActive"]:
+                unavailable.append(it.get("name") or row.get("ProductName") or "Ürün")
+
+        if unavailable:
+            db.close()
+            names = ", ".join(dict.fromkeys(unavailable))
+            raise HTTPException(
+                400, f"{names} şu an müsait değil. Lütfen sepetten çıkarıp tekrar deneyin."
+            )
+
         raw_total = sum(i.get("qty", 1) * i.get("price", 0) for i in req.items)
         # Kampanya indirimi sunucuda hesaplanır (client'ın gönderdiği tutara güvenilmez).
         # Hesap herhangi bir nedenle hata verirse indirimsiz tutara güvenli düşülür.
@@ -318,6 +353,8 @@ async def create_order(req: OrderCreateReq):
         db.commit()
         db.close()
         return {"success": True, "order_id": order_id}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, str(e))
 
