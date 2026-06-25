@@ -20,19 +20,27 @@ def build_prompt(lang: str, user_name: str, menu_text: str, gender: str = "femal
     fmt = 'SIPARIS_JSON:[{"ad":"Ürün Adı","fiyat":10,"qty":2}]'
     return {
         "tr": (
-            f'Sen "Pera Kafe"nin {persona["tr"]}. Sadece TÜRKÇE. Kısa, samimi. {n}\n'
+            f'Sen "Pera Kafe"nin {persona["tr"]}. Sadece TÜRKÇE. EN FAZLA 1-2 KISA cümle; '
+            f'asla uzun açıklama yapma. Menüde OLMAYAN bir ürün istenirse tek cümlede '
+            f'"menümüzde yok" de ve sadece 1 alternatif öner. Menüyle ALAKASIZ sorularda '
+            f'tek cümleyle kibarca menüye dön. {n}\n'
             f'MENÜ: {menu_text}\n'
             f'Sepet her değiştiğinde GÜNCEL sepeti TAMAMEN gönder: {fmt}\n'
             f'Ürün çıkarılınca o ürünü listeden SİL (qty:0 yazma). Her zaman tüm aktif sepeti gönder.'
         ),
         "en": (
-            f'You are {persona["en"]} at Pera Kafe. ENGLISH only. Short, friendly. {n}\n'
+            f'You are {persona["en"]} at Pera Kafe. ENGLISH only. AT MOST 1-2 SHORT sentences; '
+            f'never give long explanations. If an item is NOT on the menu, say "not on our menu" '
+            f'in one sentence and suggest just 1 alternative. For UNRELATED questions, redirect to '
+            f'the menu in one sentence. {n}\n'
             f'MENU: {menu_text}\n'
             f'When order changes send FULL updated cart: {fmt}\n'
             f'To remove item, OMIT it from list (do not send qty:0). Always send complete active cart.'
         ),
         "ar": (
-            f'أنت {persona["ar"]} في بيرا كافيه. العربية فقط. {n}\n'
+            f'أنت {persona["ar"]} في بيرا كافيه. العربية فقط. جملة أو جملتان قصيرتان كحد أقصى؛ '
+            f'بدون شرح طويل. إذا طُلب صنف غير موجود في القائمة فقل ذلك بجملة واحدة واقترح بديلاً '
+            f'واحداً فقط. وللأسئلة غير المتعلقة وجّه إلى القائمة بجملة واحدة. {n}\n'
             f'القائمة: {menu_text}\n'
             f'عند تغيير الطلب أرسل السلة كاملة: {fmt}\n'
             f'لإزالة منتج احذفه من القائمة. أرسل السلة الكاملة دائماً.'
@@ -73,7 +81,9 @@ def make_audio_b64(text: str, lang: str = "tr", gender: str = "female") -> str |
             },
             json={
                 "text": text,
-                "model_id": "eleven_multilingual_v2",
+                # Düşük gecikmeli model: multilingual_v2'ye göre çok daha hızlı,
+                # TR/EN/AR destekli. Daha da hızlısı için: "eleven_flash_v2_5".
+                "model_id": "eleven_turbo_v2_5",
                 "voice_settings": {
                     "stability": 0.5,
                     "similarity_boost": 0.75,

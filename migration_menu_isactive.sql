@@ -34,3 +34,27 @@ BEGIN
     WHERE COALESCE(p.IsActive, 1) = TRUE;
 END //
 DELIMITER ;
+
+-- ================================================================
+-- 2. Artık ölü olan IsAvailable sütununu sil.
+-- ----------------------------------------------------------------
+-- DİKKAT: Bu blok, YUKARIDAKİ prosedür yeniden tanımlandıktan SONRA
+-- gelir. Dosyayı baştan sona çalıştırdığında GetActiveMenu artık
+-- IsAvailable'a bakmıyor olur, dolayısıyla sütunu silmek güvenlidir.
+-- (Sildiğimiz IsAvailable; IsActive kalıyor — admin panelinin kullandığı sütun.)
+--
+-- MySQL'de "DROP COLUMN IF EXISTS" yok; tekrar çalıştırılınca hata
+-- vermesin diye information_schema ile kontrol edip öyle siliyoruz.
+-- ================================================================
+SET @col_exists := (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME   = 'products'
+      AND COLUMN_NAME  = 'IsAvailable'
+);
+SET @ddl := IF(@col_exists > 0,
+               'ALTER TABLE products DROP COLUMN IsAvailable',
+               'DO 0');  -- DO 0: kolon yoksa hiçbir şey yapma
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
